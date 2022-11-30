@@ -1,0 +1,8 @@
+---
+- name: "Setup for the AWX/Automation Controller system."
+  hosts: "{{ 'awx_servers' }}"
+  become: true
+
+  roles:
+    - awx-install
+    - awx-custom-config
