@@ -6,7 +6,9 @@ How to install this AWX/Automation Controller setup.
 
 ## Provision a Server
 
-Provision a Debian or Ubuntu server with >=8GB RAM and setup SSH access to the root account.
+Provision a Debian 11 or Ubuntu 22.04 server with >=8GB RAM and a public IP, then setup SSH access to the root account, this will be our AWX server.
+
+If you plan on using a backup server (recommended), provision a Debian 11 or Ubuntu 22.04 server with >=2GB RAM and setup SSH access to the root account.
 
 
 ## Setup DNS entry for it:
@@ -52,6 +54,12 @@ deploy_source: https://github.com/PC-Admin/project-repository.git
 deploy_branch: testing
 # The organisations email for LetsEncrypt.
 certbot_email: michael@perthchat.org
+```
+
+If using the backup server also configure:
+```
+backup_enabled: true
+backup_server_ip: 123.456.789.255
 ```
 
 

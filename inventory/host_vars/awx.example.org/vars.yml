@@ -28,3 +28,7 @@ update_schedule_interval: 1
 # Repository Settings
 deploy_source: https://github.com/spantaleev/matrix-docker-ansible-deploy.git
 deploy_branch: master
+
+# Backup Server Settings
+backup_enabled: false
+backup_server_ip: 123.456.789.255

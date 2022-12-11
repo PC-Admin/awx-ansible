@@ -24,6 +24,10 @@
 - import_tasks: "{{ role_path }}/tasks/schedules_awx.yml"
   tags: [ 'never', 'configure-awx' ]
 
-# AWX/Automation Controller configure 'Backup AWX System' job template
-- import_tasks: "{{ role_path }}/tasks/backup_awx.yml"
+# AWX/Automation Controller configure 'Backup AWX System (1/2)' job template to perform the initial dump of AWX
+- import_tasks: "{{ role_path }}/tasks/backup_awx_1.yml"
+  tags: [ 'never', 'setup-backup' ]
+
+# AWX/Automation Controller configure 'Backup AWX System (2/2)' job template to perform borg backup to an external server
+- import_tasks: "{{ role_path }}/tasks/backup_awx_2.yml"
   tags: [ 'never', 'setup-backup' ]
