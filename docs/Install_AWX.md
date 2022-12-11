@@ -1,3 +1,4 @@
+
 # AWX/Automation Controller Installation Instructions
 
 How to install this AWX/Automation Controller setup.
@@ -22,7 +23,6 @@ A/AAAA record for rancher.example.org to the servers IP,
 1) Install the following ansible-galaxy packages on the controller:
 
 `$ ansible-galaxy collection install --force awx.awx:21.9.0`
-`$ ansible-galaxy collection install community.crypto`
 
 
 2) Edit host into: [./inventory/hosts](./inventory/hosts)
@@ -57,10 +57,39 @@ certbot_email: michael@perthchat.org
 
 3) Run the playbook with the following tags:
 
-`$ ansible-playbook -v -i ./inventory/hosts -t "setup,setup-firewall,master-token,configure-awx,setup-rancher" setup.yml`
+`$ ansible-playbook -v -i ./inventory/hosts -t "setup,setup-firewall,master-token,configure-awx,setup-backup," setup.yml`
+
+BUSTED TAG: `setup-rancher`
 
 
-4) In AWX, set the base URL
+4) In AWX 'customize pod specification' for the default Container Instance Group:
+
+Go into: Instance Groups > default > Edit
+
+Check 'Customize pod specification' and alter the following values in 'Custom pod spec':
+```
+apiVersion: v1
+kind: Pod
+metadata:
+  namespace: awx
+spec:
+  serviceAccountName: awx-backup
+  automountServiceAccountToken: true
+  containers:
+    - image: quay.io/ansible/awx-ee:latest
+      name: worker
+      args:
+        - ansible-runner
+        - worker
+        - '--private-data-dir=/runner'
+      resources:
+        requests:
+          cpu: 250m
+          memory: 100Mi
+```
+
+
+5) In AWX, set the base URL
 
 Go into: Settings > Miscellaneous System Settings > Edit
 

@@ -23,3 +23,7 @@
 # AWX/Automation Controller configure job schedules
 - import_tasks: "{{ role_path }}/tasks/schedules_awx.yml"
   tags: [ 'never', 'configure-awx' ]
+
+# AWX/Automation Controller configure 'Backup AWX System' job template
+- import_tasks: "{{ role_path }}/tasks/backup_awx.yml"
+  tags: [ 'never', 'setup-backup' ]

@@ -23,6 +23,12 @@
     port: '443'
     proto: tcp
 
+- name: UFW add port 6443 TCP (API)
+  ufw:
+    rule: allow
+    port: '6443'
+    proto: tcp
+
 - name: UFW default allow outgoing traffic
   ufw:
     policy: allow
