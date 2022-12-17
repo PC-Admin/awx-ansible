@@ -5,11 +5,19 @@
   ansible.builtin.apt:
     pkg:
     - borgmatic
+  register: apt_status
+  until: apt_status is success
+  delay: 6
+  retries: 10
 
 - name: Add prerequisite packages to AWX
   ansible.builtin.apt:
     pkg:
     - borgmatic
+  register: apt_status
+  until: apt_status is success
+  delay: 6
+  retries: 10
 
 - name: Ensure root users ~/.ssh/ folder exists on AWX
   ansible.builtin.file:
@@ -92,12 +100,20 @@
   ansible.builtin.apt:
     pkg:
     - borgmatic
+  register: apt_status
+  until: apt_status is success
+  delay: 6
+  retries: 10
 
 - name: Install Borgmatic on the backup server
   delegate_to: '{{ backup_server_ip }}'
   ansible.builtin.apt:
     pkg:
     - borgmatic
+  register: apt_status
+  until: apt_status is success
+  delay: 6
+  retries: 10
 
 - name: Ensure backup directory exists on backup server
   delegate_to: '{{ backup_server_ip }}'

@@ -7,11 +7,19 @@
 - name: Update repos
   apt:
     update_cache: yes
+  register: apt_status
+  until: apt_status is success
+  delay: 6
+  retries: 10
 
 - name: Upgrade all packages
   apt:
     name: "*"
     state: latest
+  register: apt_status
+  until: apt_status is success
+  delay: 6
+  retries: 10
 
 - name: Add prerequisite packages
   apt:
@@ -22,3 +30,7 @@
     - software-properties-common
     - apt-listchanges
     - make
+  register: apt_status
+  until: apt_status is success
+  delay: 6
+  retries: 10

@@ -1,6 +1,6 @@
 # AWX/Automation Controller Setup
 
-This playbook spawns an AWX/Automation Controller system that can create and manage multiple servers.
+This playbook spawns an AWX/Automation Controller system onto Debian/Ubuntu that can create and manage multiple servers.
 
 ~~It also can install [rancher](https://www.rancher.com/), a tool for managing Kubernetes.~~
 
