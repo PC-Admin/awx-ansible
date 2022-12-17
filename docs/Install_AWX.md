@@ -18,6 +18,7 @@ Map an:
 A/AAAA record for panel.example.org to the servers IP.
 A/AAAA record for rancher.example.org to the servers IP, 
     or a CNAME record for it pointing to panel.example.org.
+optionally, an A/AAAA record for backup.example.org to the backup servers IP.
 
 
 ## Install
@@ -59,7 +60,7 @@ certbot_email: michael@perthchat.org
 If using the backup server also configure:
 ```
 backup_enabled: true
-backup_server_ip: 123.456.789.255
+backup_server_url: backup.example.org
 ```
 
 

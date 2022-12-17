@@ -1,7 +1,18 @@
 ---
 
+- name: Add prerequisite packages to backup server
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.apt:
+    pkg:
+    - borgmatic
+
+- name: Add prerequisite packages to AWX
+  ansible.builtin.apt:
+    pkg:
+    - borgmatic
+
 - name: Ensure root users ~/.ssh/ folder exists on AWX
-  file:
+  ansible.builtin.file:
     path: /root/.ssh/
     state: directory
     mode: 0700
@@ -23,17 +34,6 @@
     name: borg
     shell: /bin/bash
     password: '!'
-
-- name: Install Borgmatic on AWX
-  apt:
-    pkg:
-    - borgmatic
-
-- name: Install Borgmatic on the backup server
-  delegate_to: '{{ backup_server_ip }}'
-  apt:
-    pkg:
-    - borgmatic
 
 - name: Collect public SSH key to variable
   ansible.builtin.slurp:
@@ -57,7 +57,9 @@
   delegate_to: '{{ backup_server_ip }}'
   ansible.builtin.lineinfile:
     path: /home/borg/.ssh/authorized_keys
-    line: "{{ borgmatic_public_key['content'] | b64decode }}"
+    regexp: '^command="borg serve --restrict-to-path {{ backup_directory }}",restrict.*$'
+    line: |
+        command="borg serve --restrict-to-path {{ backup_directory }}",restrict {{ borgmatic_public_key['content'] | b64decode }}
     owner: borg
     group: borg
     mode: '0600'
@@ -83,5 +85,57 @@
 - name: Perform initial SSH handshake, accept the key blindly
   become: yes
   become_user: borg
-  command: |
+  ansible.builtin.command: |
       ssh -o "StrictHostKeyChecking no" {{ backup_server_ip }} exit
+
+- name: Install Borgmatic on AWX
+  ansible.builtin.apt:
+    pkg:
+    - borgmatic
+
+- name: Install Borgmatic on the backup server
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.apt:
+    pkg:
+    - borgmatic
+
+- name: Ensure backup directory exists on backup server
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.file:
+    path: '{{ backup_directory }}'
+    state: directory
+    mode: 0755
+    owner: borg
+    group: borg
+
+- name: Add environment variable for borg user
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.lineinfile:
+    path: /home/borg/.profile
+    regexp: '^export BORG_PASSPHRASE=./*$'
+    line: "export BORG_PASSPHRASE={{ backup_passphrase }}"
+    owner: borg
+    group: borg
+    mode: '0600'
+
+- name: Perform borg init on backup server
+  delegate_to: '{{ backup_server_ip }}'
+  become: yes
+  become_user: borg
+  shell: |
+      'borg init --encryption=repokey {{ backup_directory }}'
+  args:
+    creates: '{{ backup_directory }}nonce'
+
+- name: Ensure borgmatic config directory exists on AWX
+  ansible.builtin.file:
+    path: '/home/borg/.config/borgmatic/'
+    state: directory
+    mode: 0755
+    owner: borg
+    group: borg
+
+- name: Save borgmatic config file, template
+  template:
+    src: '{{ role_path }}/templates/borg-config.yaml.j2'
+    dest: '/home/borg/.config/borgmatic/config.yaml'

@@ -32,16 +32,35 @@
     file: /tmp/awx/tokens.yml
   no_log: True
 
-- name: "Get AWX/Automation Controller administrator token (1/2)"
-  shell: |
-      kubectl get pods --namespace=awx | grep -v 'NAME\|awx-operator\|awx-postgres' | awk '{print $1}'
-  register: awx_pod
+#- name: "Get AWX/Automation Controller administrator token (1/2)"
+#  shell: |
+#      kubectl get pods --namespace=awx | grep -v 'NAME\|awx-operator\|awx-postgres' | awk '{print $1}'
+#  register: awx_pod
 
-- name: "Get AWX/Automation Controller administrator token (2/2)"
-  command: |
-      kubectl exec -n awx -i -t {{ awx_pod.stdout }} --container awx-task -- /bin/bash -c 'awx-manage create_oauth2_token --user {{ admin_username }}'
+#- name: "Get AWX/Automation Controller administrator token (2/2)"
+#  command: |
+#      kubectl exec -n awx -i -t {{ awx_pod.stdout }} --container awx-task -- /bin/bash -c 'awx-manage create_oauth2_token --user {{ admin_username }}'
+#  register: awx_token
+#  no_log: True
+
+#- name: debug
+#  debug:
+#    msg: "{{ awx_token.token }}"
+
+- name: Create a new Master token using username/password
+  awx.awx.token:
+    description: 'Master Token {{ ansible_date_time }}'
+    scope: "write"
+    state: present
+    controller_host: "https://{{ awx_url }}"
+    controller_username: "{{ admin_username }}"
+    controller_password: "{{ admin_password }}"
+    validate_certs: false
   register: awx_token
-  #no_log: True
+
+- name: debug
+  debug:
+    msg: "{{ awx_token.ansible_facts.tower_token.token }}"
 
 - name: Add master_token line to tokens.yml file
   delegate_to: localhost
@@ -54,9 +73,9 @@
     mode: '0600'
     state: present
   with_dict:
-    'master_token': '{{ awx_token.stdout }}'
-#    'master_token': '{{ master_token_creation.ansible_facts.tower_token.token }}'
-  no_log: True
+#    'master_token': '{{ awx_token.token }}'
+    'master_token': '{{ awx_token.ansible_facts.tower_token.token }}'
+#  no_log: True
 
 - name: Add master_token_id line to tokens.yml file
   delegate_to: localhost

@@ -1,0 +1,37 @@
+location:
+    source_directories:
+        - /
+    exclude_patterns:
+        - '- /var/log/borgbackup/'
+        - '- /var/lib/apt/lists/'
+        - '- /var/cache/'
+        - '- /var/tmp/'
+        - '- /dev'
+        - '- /proc'
+        - '- /sys'
+        - '- /tmp'
+
+    one_file_system: true
+
+    repositories:
+        - {{ backup_server_ip }}:{{ backup_directory }}
+
+    exclude_caches: true
+
+storage:
+    compression: auto,zstd
+    encryption_passphrase: {{ backup_passphrase }}
+    archive_name_format: '{hostname}-{now}'
+    checkpoint_interval: 600
+
+retention:
+    keep_daily: {{ backup_retention_days }}
+    prefix: '{hostname}-'
+
+consistency:
+    checks:
+        - repository
+        - archives
+
+    check_last: 3
+    prefix: '{hostname}-'
