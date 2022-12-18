@@ -1,0 +1,241 @@
+---
+
+- name: Install Prometheus and Prometheus Node Exporter on the AWX Server
+  ansible.builtin.apt:
+    pkg:
+    - prometheus
+    - prometheus-node-exporter
+  register: apt_status
+  until: apt_status is success
+  delay: 6
+  retries: 10
+
+- name: Make sure Prometheus unit is running and enabled on AWX Server
+  ansible.builtin.systemd:
+    state: started
+    name: prometheus
+    enabled: yes
+
+- name: Install the Grafana prerequisites on Backup Server
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.apt:
+    pkg:
+    - adduser
+    - libfontconfig1
+    - apache2
+    - apt-transport-https
+    - certbot
+    - python3-certbot-apache
+  register: apt_status
+  until: apt_status is success
+  delay: 6
+  retries: 10
+
+- name: Install Prometheus and Prometheus Node Exporter on the Backup Server
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.apt:
+    pkg:
+    - prometheus
+    - prometheus-node-exporter
+  register: apt_status
+  until: apt_status is success
+  delay: 6
+  retries: 10
+
+- name: Make sure Prometheus unit is running and enabled on Backup Server
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.systemd:
+    state: started
+    name: prometheus
+    enabled: yes
+
+#sudo apt-get install -y adduser libfontconfig1
+
+#- name: Download Grafana package to Backup Server
+#  get_url:
+#    url: https://dl.grafana.com/enterprise/release/grafana-enterprise_9.3.2_amd64.deb
+#    dest: /root/
+#    #checksum: sha256:be169fc5333a80c5c4e272f1603ab65361636e27ed513a1ae2c701f93893c0fc
+
+#wget https://dl.grafana.com/enterprise/release/grafana-enterprise_9.3.2_amd64.deb
+
+#- name: Install the Grafana on Backup Server
+#  delegate_to: '{{ backup_server_ip }}'
+#  ansible.builtin.apt:
+#    deb: https://dl.grafana.com/enterprise/release/grafana-enterprise_9.3.2_amd64.deb
+
+#sudo dpkg -i grafana-enterprise_9.3.2_amd64.deb
+
+#sudo wget -q -O /usr/share/keyrings/grafana.key https://apt.grafana.com/gpg.key
+#echo "deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+#sudo apt-get update
+#sudo apt-get install grafana
+
+- name: Download Grafana authors signing key to Backup Server
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.apt_key:
+    id: 4E40DDF6D76E284A4A6780E48C8C34C524098CB6
+    url: https://apt.grafana.com/gpg.key
+    keyring: /usr/share/keyrings/grafana.key
+
+#- name: Download Grafana signing key to Backup Server
+#  delegate_to: '{{ backup_server_ip }}'
+#  get_url:
+#    url: https://apt.grafana.com/gpg.key
+#    dest: /usr/share/keyrings/grafana.key
+
+- name: Add Grafana repository into sources list of Backup Server
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.apt_repository:
+    repo: deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com stable main
+    state: present
+
+- name: Update repos on the Backup Server
+  delegate_to: '{{ backup_server_ip }}'
+  apt:
+    update_cache: yes
+  register: apt_status
+  until: apt_status is success
+  delay: 6
+  retries: 10
+
+- name: Install Grafana on the Backup Server
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.apt:
+    pkg:
+    - grafana
+  register: apt_status
+  until: apt_status is success
+  delay: 6
+  retries: 10
+
+- name: Make sure Grafana unit is restarted and enabled on Backup Server
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.systemd:
+    state: restarted
+    name: grafana-server
+    enabled: yes
+
+- name: Check if Diffie Hellman file already exists
+  delegate_to: '{{ backup_server_ip }}'
+  stat:
+    path: '/etc/ssl/grafana_dhparam.pem'
+  register: stat_result
+
+- name: Generate Diffie-Hellman parameters if not
+  delegate_to: '{{ backup_server_ip }}'
+  openssl_dhparam:
+    path: '/etc/ssl/grafana_dhparam.pem'
+    size: 2048
+  when: not stat_result.stat.exists
+
+- name: Check if the cert for Grafana already exists
+  delegate_to: '{{ backup_server_ip }}'
+  stat:
+    path: '/etc/letsencrypt/live/{{ grafana_url }}/fullchain.pem'
+  register: stat_result_2
+
+- name: Generate letsencrypt certificate for Grafana if not
+  delegate_to: '{{ backup_server_ip }}'
+  command: certbot certonly --apache --noninteractive --agree-tos -m {{ certbot_email }} -d '{{ grafana_url }}'
+  when: not stat_result_2.stat.exists
+
+#sudo certbot --apache -d grafana.heyvaldemar.net
+
+- name: Creates a crontab entry to renew certbot"
+  delegate_to: '{{ backup_server_ip }}'
+  cron:
+    name: "Renew letsencrypt certificate"
+    special_time: daily
+    user: root
+    job: '/bin/sh /usr/bin/certbot renew --quiet --no-self-upgrade'
+
+- name: Make sure prerequisite Apache units are enabled on Backup Server (1/4)
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.command: a2enmod proxy
+  args:
+    creates: '/etc/apache2/mods-enabled/proxy.load'
+
+- name: Make sure prerequisite Apache units are enabled on Backup Server (2/4)
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.command: a2enmod proxy_http
+  args:
+    creates: '/etc/apache2/mods-enabled/proxy_http.load'
+
+- name: Make sure prerequisite Apache units are enabled on Backup Server (3/4)
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.command: a2enmod rewrite
+  args:
+    creates: '/etc/apache2/mods-enabled/rewrite.load'
+
+- name: Make sure prerequisite Apache units are enabled on Backup Server (4/4)
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.command: a2enmod ssl
+  args:
+    creates: '/etc/apache2/mods-enabled/ssl.load'
+
+
+#- name: Template the HTTP site for Grafana on Backup Server
+#  delegate_to: '{{ backup_server_ip }}'
+#  ansible.builtin.template:
+#    src: '{{ role_path }}/templates/apache-http.conf.j2'
+#    dest: '/etc/apache2/sites-available/{{ grafana_url }}-http.conf'
+#    owner: root
+#    group: root
+#    mode: '0644'
+
+- name: Template the HTTPS site for Grafana on Backup Server
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.template:
+    src: '{{ role_path }}/templates/apache-https.conf.j2'
+    dest: /etc/apache2/sites-available/{{ grafana_url }}.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+#- name: Enable HTTP site for Grafana on Backup Server
+#  delegate_to: '{{ backup_server_ip }}'
+#  ansible.builtin.command: 'a2ensite {{ grafana_url }}-http.conf'
+
+- name: Enable HTTPS site for Grafana on Backup Server
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.command: 'a2ensite {{ grafana_url }}.conf'
+  args:
+    creates: '/etc/apache2/sites-enabled/{{ grafana_url }}.conf'
+
+- name: Disable default Apache site on Backup Server
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.command: 'a2dissite 000-default.conf'
+  args:
+    removes: '/etc/apache2/sites-enabled/000-default.conf'
+
+#sudo a2ensite grafana.heyvaldemar.net.conf
+#sudo a2ensite grafana.heyvaldemar.net-ssl.conf
+#sudo a2dissite 000-default.conf
+
+- name: Test that there are no errors in the syntax of the new Apache config file
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.command: apache2ctl configtest
+
+- name: Restart Apache unit on Backup Server
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.systemd:
+    state: restarted
+    name: apache2
+    enabled: yes
+
+- name: Set admin users password for grafana-server
+  delegate_to: '{{ backup_server_ip }}'
+  command: 'grafana-cli admin reset-admin-password {{ grafana_admin_password }}'
+
+- name: Create local prometheus datasource
+  community.grafana.grafana_datasource:
+    name: local_prometheus
+    # In the web interface direct access is named 'Server'. (trying instead of 'proxy')
+    access: direct
+    ds_type: prometheus
+    ds_url: 'http://127.0.0.1:9090'
+    tls_skip_verify: true
+    url: "https://{{ grafana_url }}"
+    grafana_user: "admin"
+    grafana_password: "{{ grafana_admin_password }}"

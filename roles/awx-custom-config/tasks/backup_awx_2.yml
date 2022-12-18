@@ -124,24 +124,28 @@
     owner: borg
     group: borg
 
-- name: Add environment variable for borg user
-  delegate_to: '{{ backup_server_ip }}'
-  ansible.builtin.lineinfile:
-    path: /home/borg/.profile
-    regexp: '^export BORG_PASSPHRASE=./*$'
-    line: "export BORG_PASSPHRASE={{ backup_passphrase }}"
-    owner: borg
-    group: borg
-    mode: '0600'
+#- name: Add environment variable for borg user
+#  delegate_to: '{{ backup_server_ip }}'
+#  ansible.builtin.lineinfile:
+#    path: /home/borg/.profile
+#    regexp: '^export BORG_PASSPHRASE=./*$'
+#    line: "export BORG_PASSPHRASE={{ backup_passphrase }}"
+#    owner: borg
+#    group: borg
+#    mode: '0600'
 
 - name: Perform borg init on backup server
   delegate_to: '{{ backup_server_ip }}'
   become: yes
   become_user: borg
-  shell: |
-      'borg init --encryption=repokey {{ backup_directory }}'
+  shell: 'borg init --encryption=repokey {{ backup_directory }}'
+  environment:
+    BORG_PASSPHRASE: '{{ backup_passphrase }}'
   args:
     creates: '{{ backup_directory }}nonce'
+
+#runuser -u borg -- borg init --encryption=repokey {{ backup_directory }}
+#' export BORG_PASSPHRASE={{ backup_passphrase }}; borg init --encryption=repokey {{ backup_directory }}'
 
 - name: Ensure borgmatic config directory exists on AWX
   ansible.builtin.file:

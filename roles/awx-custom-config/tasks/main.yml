@@ -26,8 +26,15 @@
 
 # AWX/Automation Controller configure 'Backup AWX System (1/2)' job template to perform the initial dump of AWX
 - import_tasks: "{{ role_path }}/tasks/backup_awx_1.yml"
+  when: backup_enabled | bool
   tags: [ 'never', 'setup-backup' ]
 
-# AWX/Automation Controller configure 'Backup AWX System (2/2)' job template to perform borg backup to an external server
+# AWX/Automation Controller configure 'Backup AWX System (2/2)' job template to perform borg backup to the backup server
 - import_tasks: "{{ role_path }}/tasks/backup_awx_2.yml"
+  when: backup_enabled | bool
   tags: [ 'never', 'setup-backup' ]
+
+# Configure Prometheus/Graphana monitor on the backup server to monitor AWX/Automation Controller
+- import_tasks: "{{ role_path }}/tasks/monitor_awx.yml"
+  when: monitor_enabled | bool
+  tags: [ 'never', 'setup-monitor' ]

@@ -9,40 +9,96 @@
   delay: 6
   retries: 10
 
-- name: UFW add port 22 TCP
+- name: UFW add port 22 TCP (SSH) on AWX Server
   ufw:
     rule: allow
     port: '22'
     proto: tcp
 
-- name: UFW add port 80 TCP
+- name: UFW add port 80 TCP (AWX) on AWX Server
   ufw:
     rule: allow
     port: '80'
     proto: tcp
 
-- name: UFW add port 443 TCP
+- name: UFW add port 443 TCP (AWX) on AWX Server
   ufw:
     rule: allow
     port: '443'
     proto: tcp
 
-- name: UFW add port 6443 TCP (API)
+- name: UFW add port 6443 TCP (AWX API) on AWX Server
   ufw:
     rule: allow
     port: '6443'
     proto: tcp
 
-- name: UFW default allow outgoing traffic
+- name: UFW add port 9090 TCP (Prometheus) on AWX Server
+  ufw:
+    rule: allow
+    port: '9090'
+    proto: tcp
+  when: monitor_enabled | bool
+
+- name: UFW default allow outgoing traffic on AWX Server
   ufw:
     policy: allow
     direction: outgoing
 
-- name: UFW default deny incoming traffic
+- name: UFW default deny incoming traffic on AWX Server
   ufw:
     policy: deny
     direction: incoming
 
-- name: Enable Firewall
+- name: Enable Firewall on AWX Server
+  ufw:
+    state: enabled
+
+- name: UFW add port 22 TCP (SSH) on Backup Server
+  delegate_to: '{{ backup_server_ip }}'
+  ufw:
+    rule: allow
+    port: '22'
+    proto: tcp
+  when: monitor_enabled | bool
+
+- name: UFW add port 80 TCP (Grafana) on Backup Server
+  delegate_to: '{{ backup_server_ip }}'
+  ufw:
+    rule: allow
+    port: '80'
+    proto: tcp
+  when: monitor_enabled | bool
+
+- name: UFW add port 443 TCP (Grafana) on Backup Server
+  delegate_to: '{{ backup_server_ip }}'
+  ufw:
+    rule: allow
+    port: '443'
+    proto: tcp
+  when: monitor_enabled | bool
+
+- name: UFW add port 3000 TCP (Grafana) on Backup Server
+  delegate_to: '{{ backup_server_ip }}'
+  ufw:
+    rule: allow
+    port: '3000'
+    proto: tcp
+  when: monitor_enabled | bool
+
+- name: UFW default allow outgoing traffic on Backup Server
+  delegate_to: '{{ backup_server_ip }}'
+  ufw:
+    policy: allow
+    direction: outgoing
+
+- name: UFW default deny incoming traffic on Backup Server
+  delegate_to: '{{ backup_server_ip }}'
+  ufw:
+    policy: deny
+    direction: incoming
+
+- name: Enable Firewall on Backup Server
+  delegate_to: '{{ backup_server_ip }}'
   ufw:
     state: enabled
