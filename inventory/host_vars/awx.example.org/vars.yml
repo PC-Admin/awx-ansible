@@ -32,3 +32,10 @@ deploy_branch: master
 # Backup Server Settings
 backup_enabled: false
 backup_server_ip: 123.456.789.255
+backup_passphrase: << strong-password >>
+backup_retention_days: 90
+
+# Monitor Settings
+monitor_enabled: true
+grafana_url: grafana.example.org
+grafana_admin_password: << strong-password >>
