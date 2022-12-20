@@ -34,6 +34,9 @@
     description: "An inventory for the AWX Server itself."
     organization: "{{ org_name }}"
     state: present
+    variables:
+      ansible_connection: local
+      ansible_python_interpreter: '{{ ansible_playbook_python }}'
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes
@@ -44,9 +47,6 @@
     description: "The AWX/Automation Controller server itself."
     inventory: "AWX Server"
     state: present
-    variables:
-      ansible_connection: local
-      ansible_python_interpreter: '{{ ansible_playbook_python }}'
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes

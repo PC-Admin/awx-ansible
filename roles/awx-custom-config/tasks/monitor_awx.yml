@@ -3,6 +3,7 @@
 - name: Install Prometheus Node Exporter on the AWX Server
   ansible.builtin.apt:
     pkg:
+    - prometheus
     - prometheus-node-exporter
   register: apt_status
   until: apt_status is success
@@ -13,6 +14,12 @@
   ansible.builtin.systemd:
     state: started
     name: prometheus
+    enabled: yes
+
+- name: Make sure Prometheus Node Exporter unit is running and enabled on AWX Server
+  ansible.builtin.systemd:
+    state: started
+    name: prometheus-node-exporter
     enabled: yes
 
 - name: Install the Grafana prerequisites on Backup Server
@@ -33,17 +40,25 @@
   delegate_to: '{{ backup_server_ip }}'
   ansible.builtin.apt:
     pkg:
+    - prometheus
     - prometheus-node-exporter
   register: apt_status
   until: apt_status is success
   delay: 6
   retries: 10
 
-- name: Make sure Prometheus unit is running and enabled on Backup Server
+- name: Make sure Prometheus unit is running and enabled on AWX Server
   delegate_to: '{{ backup_server_ip }}'
   ansible.builtin.systemd:
     state: started
     name: prometheus
+    enabled: yes
+
+- name: Make sure Prometheus Node Exporter unit is running and enabled on Backup Server
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.systemd:
+    state: started
+    name: prometheus-node-exporter
     enabled: yes
 
 - name: Update repos on the Backup Server
@@ -227,7 +242,7 @@
     name: local_prometheus
     access: proxy
     ds_type: prometheus
-    ds_url: 'http://127.0.0.1:9090'
+    ds_url: 'http://172.17.0.1:9090'
     url: "https://{{ grafana_url }}"
     grafana_user: "admin"
     grafana_password: "{{ grafana_admin_password }}"
@@ -237,7 +252,7 @@
     name: local_node_exporter
     access: proxy
     ds_type: prometheus
-    ds_url: 'http://127.0.0.1:9100'
+    ds_url: 'http://172.17.0.1:9100'
     url: "https://{{ grafana_url }}"
     grafana_user: "admin"
     grafana_password: "{{ grafana_admin_password }}"

@@ -109,7 +109,7 @@ OR
 
 Go into: Instance Groups > Add > Add container group > Set name to 'AWX Server'. then insert the variables above.
 
-On the 'Backup All Servers' job template select the 'AWX Server' instance group, save it.
+Edit the 'Backup AWX System' job template select the 'AWX Server' instance group, save it.
 
 
 6) In AWX, set the base URL

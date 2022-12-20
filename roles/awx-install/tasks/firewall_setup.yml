@@ -44,6 +44,13 @@
     port: '6443'
     proto: tcp
 
+- name: UFW add port 9090 TCP (Prometheus) on AWX Server
+  ufw:
+    rule: allow
+    port: '9090'
+    proto: tcp
+  when: monitor_enabled | bool
+
 - name: UFW add port 9100 TCP (Prometheus Node Exporter) on AWX Server
   ufw:
     rule: allow

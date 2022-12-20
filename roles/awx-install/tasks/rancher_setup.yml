@@ -24,6 +24,9 @@
 - name: Add the helm repo
   command: |
       /snap/bin/helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
+
+# helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
+# helm repo add rancher-alpha https://releases.rancher.com/server-charts/alpha
       
 - name: Run a helm repo update
   command: |
@@ -31,13 +34,18 @@
 
 - name: Deploy the stable Rancher
   shell: |
-      /snap/bin/helm install rancher rancher-stable/stable \
+      /snap/bin/helm install rancher rancher-stable/rancher \
         --namespace cattle-system \
         --set hostname={{ rancher_url }} \
         --set bootstrapPassword={{ rancher_password }} \
         --set ingress.tls.source=letsEncrypt \
         --set letsEncrypt.email={{ certbot_email }} \
-        --set hostname=awx.penholder.xyz \
         --kubeconfig /etc/rancher/k3s/k3s.yaml
 
 # Setup rancher on another server with docker is one solution! (could also house backups/monitoring)
+
+#TASK [awx-install : Deploy the stable Rancher] ****************************************************************************************************************************************************
+#fatal: [awx6.vacatejaws.xyz]: FAILED! => {"changed": true, "cmd": "/snap/bin/helm install rancher rancher-stable/rancher  --namespace cattle-system  --set hostname=rancher2.vacatejaws.xyz  --set 
+# bootstrapPassword=qGX1JiI4gDKPSwOZ  --set ingress.tls.source=letsEncrypt  --set letsEncrypt.email=perthchat@protonmail.com  --kubeconfig /etc/rancher/k3s/k3s.yaml\n", "delta": "0:00:00.401607", 
+# "end": "2022-12-20 06:41:07.897339", "msg": "non-zero return code", "rc": 1, "start": "2022-12-20 06:41:07.495732", "stderr": "Error: INSTALLATION FAILED: cannot re-use a name that is still in use", 
+# "stderr_lines": ["Error: INSTALLATION FAILED: cannot re-use a name that is still in use"], "stdout": "", "stdout_lines": []}

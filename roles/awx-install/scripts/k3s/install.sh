@@ -36,6 +36,7 @@ set -o noglob
 #   - INSTALL_K3S_SKIP_START
 #     If set to true will not start k3s service.
 #
+#INSTALL_K3S_VERSION=v1.23.14+k3s1
 INSTALL_K3S_VERSION=v1.24.8+k3s1
 #   - INSTALL_K3S_VERSION
 #     Version of k3s to download from github. Will attempt to download from the

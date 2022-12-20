@@ -1,8 +1,8 @@
 # AWX/Automation Controller Setup
 
-This playbook spawns an AWX/Automation Controller system onto Debian/Ubuntu that can create and manage multiple servers.
+This playbook spawns a ready-to-use AWX system on K3S, on a Debian 11 or Ubuntu 22.04 host. AWX is a tool that can be used to manage multiple servers with Ansible.
 
-~~It also can install [rancher](https://www.rancher.com/), a tool for managing Kubernetes.~~
+It also can install [rancher](https://www.rancher.com/), a tool for managing Kubernetes.
 
 Ideally this system can manage the updates, configuration, backups and monitoring of servers on it's own. 
 
@@ -19,8 +19,10 @@ To configure and install this AWX/Automation Controller setup on your own server
 - Update awx-on-k3s to newer version. 1.1.0 [done]
 - Update k9s to latest version. [done]
 - Fix AWX token generation. [done]
+- Fix Rancher. [done]
+- Add basic monitoring with Node Exporter. [done]
 - Automate backups using borg. [in progress]
-- Fix Rancher. []
+- Refine prometheus/grafana monitoring. [in progress]
 - Automate recovery. []
 - Automate routine recovery testing for the AWX setup. []
 
