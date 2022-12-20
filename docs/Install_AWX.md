@@ -67,19 +67,12 @@ backup_server_url: backup.example.org
 
 3) Run the playbook with the following tags:
 
-`$ ansible-playbook -v -i ./inventory/hosts -t "setup,setup-firewall,master-token,configure-awx" setup.yml`
-
-BUSTED TAG: `setup-rancher`
-
-
-4) To install the backup/monitor server run the playbook again with the following tags:
-
-`$ ansible-playbook -v -i ./inventory/hosts -t "setup-backup,setup-monitor" setup.yml`
+`$ ansible-playbook -v -i ./inventory/hosts -t "setup,setup-firewall,master-token,configure-awx,setup-rancher,setup-backup,setup-monitor" setup.yml`
 
 NOTE: If using the monitor, you need to immediately go to your {{ grafana_url }} and set the initial administrator password manually.
 
 
-5) In AWX, set the base URL
+4) In AWX, set the base URL
 
 Go into: Settings > Miscellaneous System Settings > Edit
 
