@@ -45,33 +45,32 @@
   command: |
       kubectl -n awx apply -f /root/awx-on-k3s-1.1.0/backup/ansible/rbac/sa.yaml
 
-#- name: Customize pod specification for default Container Instance Group
-#  awx.awx.instance_group:
-#    name: default
-#    is_container_group: True
-#    policy_instance_percentage: 50
-#    pod_spec_override: |
-#      apiVersion: v1
-#      kind: Pod
-#      metadata:
-#        namespace: awx
-#      spec:
-#        serviceAccountName: awx-backup
-#        automountServiceAccountToken: true
-#        containers:
-#          - image: quay.io/ansible/awx-ee:latest
-#            name: worker
-#            args:
-#              - ansible-runner
-#              - worker
-#              - '--private-data-dir=/runner'
-#            resources:
-#              requests:
-#                cpu: 250m
-#                memory: 100Mi
-#    tower_host: "https://{{ awx_url }}"
-#    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-#    validate_certs: yes
+- name: Customize pod specification for 'AWX Server' Container Instance Group
+  awx.awx.instance_group:
+    name: "AWX Server"
+    is_container_group: True
+    pod_spec_override: |
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        namespace: awx
+      spec:
+        serviceAccountName: awx-backup
+        automountServiceAccountToken: true
+        containers:
+          - image: quay.io/ansible/awx-ee:latest
+            name: worker
+            args:
+              - ansible-runner
+              - worker
+              - '--private-data-dir=/runner'
+            resources:
+              requests:
+                cpu: 250m
+                memory: 100Mi
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes
 
 - name: Create 'Backup AWX System' job template
   awx.awx.tower_job_template:
@@ -81,9 +80,7 @@
     inventory: "AWX Server"
     project: "AWX on K3s"
     playbook: backup/ansible/project/backup.yml
-    #extra_vars: "{{ lookup('file', '{{ role_path }}/extra-vars/create-account.json') }}"
-    #ask_extra_vars: yes
-    #ask_execution_environment_on_launch: true
+    instance_groups: ["AWX Server"]
     state: present
     verbosity: 1
     tower_host: "https://{{ awx_url }}"
@@ -244,15 +241,15 @@
     owner: borg
     group: borg
 
-#- name: Add environment variable for borg user
-#  delegate_to: '{{ backup_server_ip }}'
-#  ansible.builtin.lineinfile:
-#    path: /home/borg/.profile
-#    regexp: '^export BORG_PASSPHRASE=./*$'
-#    line: "export BORG_PASSPHRASE={{ backup_passphrase }}"
-#    owner: borg
-#    group: borg
-#    mode: '0600'
+- name: Add environment variable for borg user
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.lineinfile:
+    path: /home/borg/.profile
+    regexp: '^export BORG_PASSPHRASE=./*$'
+    line: "export BORG_PASSPHRASE={{ backup_passphrase }}"
+    owner: borg
+    group: borg
+    mode: '0600'
 
 - name: Perform borg init on backup server
   delegate_to: '{{ backup_server_ip }}'
@@ -263,9 +260,6 @@
     BORG_PASSPHRASE: '{{ backup_passphrase }}'
   args:
     creates: '{{ backup_directory }}nonce'
-
-#runuser -u borg -- borg init --encryption=repokey {{ backup_directory }}
-#' export BORG_PASSPHRASE={{ backup_passphrase }}; borg init --encryption=repokey {{ backup_directory }}'
 
 - name: Ensure borgmatic config directory exists on AWX
   ansible.builtin.file:

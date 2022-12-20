@@ -79,40 +79,7 @@ BUSTED TAG: `setup-rancher`
 NOTE: If using the monitor, you need to immediately go to your {{ grafana_url }} and set the initial administrator password manually.
 
 
-5) In AWX 'customize pod specification' for the default Container Instance Group:
-
-Go into: Instance Groups > default > Edit
-
-Check 'Customize pod specification' and alter the following values in 'Custom pod spec':
-```
-apiVersion: v1
-kind: Pod
-metadata:
-  namespace: awx
-spec:
-  serviceAccountName: awx-backup
-  automountServiceAccountToken: true
-  containers:
-    - image: quay.io/ansible/awx-ee:latest
-      name: worker
-      args:
-        - ansible-runner
-        - worker
-        - '--private-data-dir=/runner'
-      resources:
-        requests:
-          cpu: 250m
-          memory: 100Mi
-```
-
-OR
-
-Go into: Instance Groups > Add > Add container group > Set name to 'AWX Server'. then insert the variables above.
-
-Edit the 'Backup AWX System' job template select the 'AWX Server' instance group, save it.
-
-
-6) In AWX, set the base URL
+5) In AWX, set the base URL
 
 Go into: Settings > Miscellaneous System Settings > Edit
 

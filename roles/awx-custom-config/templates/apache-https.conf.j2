@@ -1,6 +1,7 @@
 <VirtualHost *:80>
 	ServerAdmin {{ certbot_email }}
 	ServerName {{ grafana_url }}
+	Redirect permanent / https://{{ grafana_url }}/
 </VirtualHost>
 
 <IfModule mod_ssl.c>

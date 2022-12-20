@@ -149,29 +149,35 @@
     user: root
     job: '/bin/sh /usr/bin/certbot renew --quiet --no-self-upgrade'
 
-- name: Make sure prerequisite Apache units are enabled on Backup Server (1/4)
+- name: Make sure prerequisite Apache units are enabled on Backup Server (1/5)
   delegate_to: '{{ backup_server_ip }}'
   ansible.builtin.command: a2enmod proxy
   args:
     creates: '/etc/apache2/mods-enabled/proxy.load'
 
-- name: Make sure prerequisite Apache units are enabled on Backup Server (2/4)
+- name: Make sure prerequisite Apache units are enabled on Backup Server (2/5)
   delegate_to: '{{ backup_server_ip }}'
   ansible.builtin.command: a2enmod proxy_http
   args:
     creates: '/etc/apache2/mods-enabled/proxy_http.load'
 
-- name: Make sure prerequisite Apache units are enabled on Backup Server (3/4)
+- name: Make sure prerequisite Apache units are enabled on Backup Server (3/5)
   delegate_to: '{{ backup_server_ip }}'
   ansible.builtin.command: a2enmod rewrite
   args:
     creates: '/etc/apache2/mods-enabled/rewrite.load'
 
-- name: Make sure prerequisite Apache units are enabled on Backup Server (4/4)
+- name: Make sure prerequisite Apache units are enabled on Backup Server (4/5)
   delegate_to: '{{ backup_server_ip }}'
   ansible.builtin.command: a2enmod ssl
   args:
     creates: '/etc/apache2/mods-enabled/ssl.load'
+
+- name: Make sure prerequisite Apache units are enabled on Backup Server (5/5)
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.command: a2enmod headers
+  args:
+    creates: '/etc/apache2/mods-enabled/headers.load'
 
 - name: Template the HTTPS site for Grafana on Backup Server
   delegate_to: '{{ backup_server_ip }}'
@@ -181,6 +187,17 @@
     owner: root
     group: root
     mode: '0644'
+
+- name: Template the SSL config for apache on Backup Server
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.template:
+    src: '{{ role_path }}/templates/ssl.conf'
+    dest: /etc/apache2/mods-available/ssl.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+#/etc/apache2/mods-available/ssl.conf
 
 - name: Enable HTTPS site for Grafana on Backup Server
   delegate_to: '{{ backup_server_ip }}'
@@ -281,10 +298,10 @@
     grafana_user: "admin"
     grafana_password: "{{ grafana_admin_password }}"
 
-- name: Import Grafana dashboard Prometheus
+- name: Import Grafana dashboard 'Prometheus 2.0 Overview'
   community.grafana.grafana_dashboard:
     folder: General
-    dashboard_url: https://grafana.com/api/dashboards/15489/revisions/2/download
+    dashboard_url: https://grafana.com/api/dashboards/3662/revisions/2/download
     state: present
     grafana_url: "https://{{ grafana_url }}"
     grafana_user: "admin"
@@ -316,5 +333,13 @@
     grafana_user: "admin"
     grafana_password: "{{ grafana_admin_password }}"
 
+- name: Import Grafana dashboard 'Kubernetes Cluster'
+  community.grafana.grafana_dashboard:
+    folder: K3S
+    dashboard_url: https://grafana.com/api/dashboards/7249/revisions/1/download
+    state: present
+    grafana_url: "https://{{ grafana_url }}"
+    grafana_user: "admin"
+    grafana_password: "{{ grafana_admin_password }}"
 
 
