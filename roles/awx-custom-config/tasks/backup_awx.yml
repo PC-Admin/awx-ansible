@@ -41,9 +41,25 @@
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes
 
+- name: Ensure /data/projects/ directory exists
+  ansible.builtin.file:
+    path: '/data/backup/'
+    state: directory
+    mode: 0755
+    owner: borg
+    group: borg
+
 - name: Prepare Service Account and API Token
   command: |
       kubectl -n awx apply -f /root/awx-on-k3s-1.1.0/backup/ansible/rbac/sa.yaml
+
+- name: Prepare awx-backup-claim PersistentVolumeClaim
+  command: |
+      kubectl -n awx apply -f /root/awx-on-k3s-1.1.0/backup/pvc.yaml
+
+- name: Prepare awx-backup-volume PersistentVolume
+  command: |
+      kubectl -n awx apply -f /root/awx-on-k3s-1.1.0/backup/pv.yaml
 
 - name: Customize pod specification for 'AWX Server' Container Instance Group
   awx.awx.instance_group:
