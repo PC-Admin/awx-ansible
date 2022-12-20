@@ -1,14 +1,14 @@
 
-# AWX/Automation Controller Installation Instructions
+# AWX Installation Instructions
 
-How to install this AWX/Automation Controller setup.
+How to install this AWX setup.
 
 
 ## Provision a Server
 
 Provision a Debian 11 or Ubuntu 22.04 server with >=8GB RAM and a public IP, then setup SSH access to the root account, this will be our AWX server.
 
-If you plan on using a backup server (recommended), provision a Debian 11 or Ubuntu 22.04 server with >=2GB RAM and setup SSH access to the root account.
+If you plan on using a backup/monitor server (recommended), provision a Debian 11 or Ubuntu 22.04 server with >=4GB RAM and setup SSH access to the root account.
 
 
 ## Setup DNS entry for it:
@@ -18,7 +18,7 @@ Map an:
 A/AAAA record for panel.example.org to the servers IP.
 A/AAAA record for rancher.example.org to the servers IP, 
     or a CNAME record for it pointing to panel.example.org.
-optionally, an A/AAAA record for backup.example.org to the backup servers IP.
+optionally, an A/AAAA record for grafana.example.org to the backup/monitor servers IP.
 
 
 ## Install
