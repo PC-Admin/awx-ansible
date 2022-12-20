@@ -1,0 +1,25 @@
+#jinja2: lstrip_blocks: "True"
+[Unit]
+Description=grafana
+DefaultDependencies=no
+
+[Service]
+Type=simple
+Environment="HOME=/root"
+ExecStartPre=-/usr/bin/env sh -c '/usr/bin/env docker kill grafana 2>/dev/null || true'
+ExecStartPre=-/usr/bin/env sh -c '/usr/bin/env docker rm grafana 2>/dev/null || true'
+
+ExecStart=/usr/bin/env docker run --rm --name grafana \
+			--log-driver=none \
+			--cap-drop=ALL \
+			-p 3000:3000 \
+			grafana/grafana
+
+ExecStop=-/usr/bin/env sh -c '/usr/bin/env docker kill grafana 2>/dev/null || true'
+ExecStop=-/usr/bin/env sh -c '/usr/bin/env docker rm grafana 2>/dev/null || true'
+Restart=on-failure
+RestartSec=30
+SyslogIdentifier=grafana
+
+[Install]
+WantedBy=multi-user.target

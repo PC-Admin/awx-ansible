@@ -1,40 +1,35 @@
 ---
 
-# Generates Master OAuth token for administrator account on AWX/Automation Controller
+# Generates Master OAuth token for administrator account on AWX
 - import_tasks: "{{ role_path }}/tasks/master_token.yml"
   tags: [ 'never', 'master-token' ]
 
-# AWX/Automation Controller cleanup default configuration
+# AWX cleanup default configuration
 - import_tasks: "{{ role_path }}/tasks/cleanup_defaults.yml"
   tags: [ 'never', 'configure-awx' ]
 
-# AWX/Automation Controller configure organisations, user accounts and inventories
+# AWX configure organisations, user accounts and inventories
 - import_tasks: "{{ role_path }}/tasks/users_org_inventory_awx.yml"
   tags: [ 'never', 'configure-awx' ]
 
-# AWX/Automation Controller configure projects
+# AWX configure projects
 - import_tasks: "{{ role_path }}/tasks/projects_awx.yml"
   tags: [ 'never', 'configure-awx' ]
 
-# AWX/Automation Controller configure job templates
+# AWX configure job templates
 - import_tasks: "{{ role_path }}/tasks/templates_awx.yml"
   tags: [ 'never', 'configure-awx' ]
 
-# AWX/Automation Controller configure job schedules
+# AWX configure job schedules
 - import_tasks: "{{ role_path }}/tasks/schedules_awx.yml"
   tags: [ 'never', 'configure-awx' ]
 
-# AWX/Automation Controller configure 'Backup AWX System (1/2)' job template to perform the initial dump of AWX
-- import_tasks: "{{ role_path }}/tasks/backup_awx_1.yml"
+# AWX configure 'Backup AWX System' job template to perform the initial dump of AWX, then borg that data to the backup server.
+- import_tasks: "{{ role_path }}/tasks/backup_awx.yml"
   when: backup_enabled | bool
   tags: [ 'never', 'setup-backup' ]
 
-# AWX/Automation Controller configure 'Backup AWX System (2/2)' job template to perform borg backup to the backup server
-- import_tasks: "{{ role_path }}/tasks/backup_awx_2.yml"
-  when: backup_enabled | bool
-  tags: [ 'never', 'setup-backup' ]
-
-# Configure Prometheus/Graphana monitor on the backup server to monitor AWX/Automation Controller
+# Configure Prometheus/Graphana monitor on the backup server to monitor AWX
 - import_tasks: "{{ role_path }}/tasks/monitor_awx.yml"
   when: monitor_enabled | bool
   tags: [ 'never', 'setup-monitor' ]

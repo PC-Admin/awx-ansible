@@ -38,4 +38,6 @@ backup_retention_days: 90
 # Monitor Settings
 monitor_enabled: true
 grafana_url: grafana.example.org
-grafana_admin_password: << strong-password >>
+grafana_com_username: << grafana.com username >>
+grafana_com_token: << grafana.com API token >>
+grafana_admin_password: admin

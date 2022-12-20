@@ -131,13 +131,13 @@
   command: |
       kubectl apply -k /root/awx-on-k3s-1.1.0/base
 
-- name: Check if AWX/Automation Controller is deployed (max 10min)
+- name: Check if AWX/Automation Controller is deployed (max 12min)
   command: |
       kubectl -n awx logs --tail=10 deployments/awx-operator-controller-manager -c awx-manager
   register: result
   until: result.stdout.find("failed=0") != -1
   failed_when: result.stdout.find("failed=1") != -1
-  retries: 20
+  retries: 24
   delay: 30
 
 - name: Deploy the required AWX/Automation Controller Operator objects in the awx namespace.

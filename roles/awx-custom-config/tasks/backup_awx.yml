@@ -1,5 +1,125 @@
 ---
 
+- name: Include AWX/Automation Controller master token from awx_tokens.yml
+  delegate_to: localhost
+  include_vars:
+    file: /tmp/awx/tokens.yml
+  no_log: True
+
+- name: Create a AWX/Automation Controller session token for executing AWX modules
+  awx.awx.tower_token:
+    description: 'AWX/Automation Controller Session Token'
+    scope: "write"
+    state: present
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ master_token }}"
+    validate_certs: yes
+  register: awx_session_token
+
+- name: Add 'AWX on K3s' project to AWX admins organisation
+  awx.awx.tower_project:
+    name: "AWX on K3s"
+    description: "AWX on K3s repository."
+    organization: "{{ org_name }}"
+    scm_type: git
+    scm_url: "https://github.com/kurokobo/awx-on-k3s.git"
+    scm_branch: "1.1.1"
+    scm_delete_on_update: yes
+    scm_update_on_launch: yes
+    state: present
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes
+
+#https://github.com/kurokobo/awx-on-k3s/commit/364e9c19d0d02794e836260c1800b97415b5dde7
+
+- name: Update 'AWX on K3s' project
+  awx.awx.tower_project_update:
+    name: "AWX on K3s"
+    timeout: 300
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes
+
+- name: Prepare Service Account and API Token
+  command: |
+      kubectl -n awx apply -f /root/awx-on-k3s-1.1.0/backup/ansible/rbac/sa.yaml
+
+#- name: Customize pod specification for default Container Instance Group
+#  awx.awx.instance_group:
+#    name: default
+#    is_container_group: True
+#    policy_instance_percentage: 50
+#    pod_spec_override: |
+#      apiVersion: v1
+#      kind: Pod
+#      metadata:
+#        namespace: awx
+#      spec:
+#        serviceAccountName: awx-backup
+#        automountServiceAccountToken: true
+#        containers:
+#          - image: quay.io/ansible/awx-ee:latest
+#            name: worker
+#            args:
+#              - ansible-runner
+#              - worker
+#              - '--private-data-dir=/runner'
+#            resources:
+#              requests:
+#                cpu: 250m
+#                memory: 100Mi
+#    tower_host: "https://{{ awx_url }}"
+#    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+#    validate_certs: yes
+
+- name: Create 'Backup AWX System' job template
+  awx.awx.tower_job_template:
+    name: "Backup AWX System"
+    description: "Backs up the AWX/Ansible Controllers host system."
+    job_type: run
+    inventory: "AWX Server"
+    project: "AWX on K3s"
+    playbook: backup/ansible/project/backup.yml
+    #extra_vars: "{{ lookup('file', '{{ role_path }}/extra-vars/create-account.json') }}"
+    #ask_extra_vars: yes
+    #ask_execution_environment_on_launch: true
+    state: present
+    verbosity: 1
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes
+
+- name: Collect timezone of AWX/Automation Controller server (Debian and derivatives only)
+  command: cat /etc/timezone
+  register: timezone_output
+
+- name: Create an rrule string for scheduling 'Backup AWX System'
+  set_fact:
+    rrule_line_backup_awx: "DTSTART;TZID={{ timezone_output.stdout }}:{{ backup_awx_schedule_start }} RRULE:FREQ={{ backup_awx_schedule_frequency }};INTERVAL={{ backup_awx_schedule_interval }}"
+
+- name: Build a schedule for 'Backup AWX System' job template
+  awx.awx.tower_schedule:
+    name: "Backup AWX System"
+    enabled: yes
+    state: present
+    unified_job_template: "Backup AWX System"
+    #extra_data: "{{ lookup('file', '{{ role_path }}/extra-vars/update_all.json') }}"
+    rrule: "{{ rrule_line_backup_awx }}"
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes
+
+- name: Delete the AWX/Automation Controller session token for executing modules
+  awx.awx.tower_token:
+    description: 'AWX/Automation Controller Session Token'
+    scope: "write"
+    state: absent
+    existing_token_id: "{{ awx_session_token.ansible_facts.tower_token.id }}"
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes
+
 - name: Add prerequisite packages to backup server
   delegate_to: '{{ backup_server_ip }}'
   ansible.builtin.apt:

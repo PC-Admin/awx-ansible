@@ -26,6 +26,7 @@ optionally, an A/AAAA record for backup.example.org to the backup servers IP.
 1) Install the following ansible-galaxy packages on the controller:
 
 `$ ansible-galaxy collection install --force awx.awx:21.9.0`
+`$ ansible-galaxy collection install community.grafana`
 
 
 2) Edit host into: [./inventory/hosts](./inventory/hosts)
@@ -66,12 +67,19 @@ backup_server_url: backup.example.org
 
 3) Run the playbook with the following tags:
 
-`$ ansible-playbook -v -i ./inventory/hosts -t "setup,setup-firewall,master-token,configure-awx,setup-backup," setup.yml`
+`$ ansible-playbook -v -i ./inventory/hosts -t "setup,setup-firewall,master-token,configure-awx" setup.yml`
 
 BUSTED TAG: `setup-rancher`
 
 
-4) In AWX 'customize pod specification' for the default Container Instance Group:
+4) To install the backup/monitor server run the playbook again with the following tags:
+
+`$ ansible-playbook -v -i ./inventory/hosts -t "setup-backup,setup-monitor" setup.yml`
+
+NOTE: If using the monitor, you need to immediately go to your {{ grafana_url }} and set the initial administrator password manually.
+
+
+5) In AWX 'customize pod specification' for the default Container Instance Group:
 
 Go into: Instance Groups > default > Edit
 
@@ -103,7 +111,8 @@ Go into: Instance Groups > Add > Add container group > Set name to 'AWX Server'.
 
 On the 'Backup All Servers' job template select the 'AWX Server' instance group, save it.
 
-5) In AWX, set the base URL
+
+6) In AWX, set the base URL
 
 Go into: Settings > Miscellaneous System Settings > Edit
 

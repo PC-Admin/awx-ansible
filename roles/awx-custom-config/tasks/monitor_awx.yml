@@ -1,9 +1,8 @@
 ---
 
-- name: Install Prometheus and Prometheus Node Exporter on the AWX Server
+- name: Install Prometheus Node Exporter on the AWX Server
   ansible.builtin.apt:
     pkg:
-    - prometheus
     - prometheus-node-exporter
   register: apt_status
   until: apt_status is success
@@ -20,8 +19,7 @@
   delegate_to: '{{ backup_server_ip }}'
   ansible.builtin.apt:
     pkg:
-    - adduser
-    - libfontconfig1
+    - docker.io
     - apache2
     - apt-transport-https
     - certbot
@@ -31,11 +29,10 @@
   delay: 6
   retries: 10
 
-- name: Install Prometheus and Prometheus Node Exporter on the Backup Server
+- name: Install Prometheus Node Exporter on the Backup Server
   delegate_to: '{{ backup_server_ip }}'
   ansible.builtin.apt:
     pkg:
-    - prometheus
     - prometheus-node-exporter
   register: apt_status
   until: apt_status is success
@@ -49,47 +46,6 @@
     name: prometheus
     enabled: yes
 
-#sudo apt-get install -y adduser libfontconfig1
-
-#- name: Download Grafana package to Backup Server
-#  get_url:
-#    url: https://dl.grafana.com/enterprise/release/grafana-enterprise_9.3.2_amd64.deb
-#    dest: /root/
-#    #checksum: sha256:be169fc5333a80c5c4e272f1603ab65361636e27ed513a1ae2c701f93893c0fc
-
-#wget https://dl.grafana.com/enterprise/release/grafana-enterprise_9.3.2_amd64.deb
-
-#- name: Install the Grafana on Backup Server
-#  delegate_to: '{{ backup_server_ip }}'
-#  ansible.builtin.apt:
-#    deb: https://dl.grafana.com/enterprise/release/grafana-enterprise_9.3.2_amd64.deb
-
-#sudo dpkg -i grafana-enterprise_9.3.2_amd64.deb
-
-#sudo wget -q -O /usr/share/keyrings/grafana.key https://apt.grafana.com/gpg.key
-#echo "deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
-#sudo apt-get update
-#sudo apt-get install grafana
-
-- name: Download Grafana authors signing key to Backup Server
-  delegate_to: '{{ backup_server_ip }}'
-  ansible.builtin.apt_key:
-    id: 4E40DDF6D76E284A4A6780E48C8C34C524098CB6
-    url: https://apt.grafana.com/gpg.key
-    keyring: /usr/share/keyrings/grafana.key
-
-#- name: Download Grafana signing key to Backup Server
-#  delegate_to: '{{ backup_server_ip }}'
-#  get_url:
-#    url: https://apt.grafana.com/gpg.key
-#    dest: /usr/share/keyrings/grafana.key
-
-- name: Add Grafana repository into sources list of Backup Server
-  delegate_to: '{{ backup_server_ip }}'
-  ansible.builtin.apt_repository:
-    repo: deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com stable main
-    state: present
-
 - name: Update repos on the Backup Server
   delegate_to: '{{ backup_server_ip }}'
   apt:
@@ -99,21 +55,49 @@
   delay: 6
   retries: 10
 
-- name: Install Grafana on the Backup Server
+- name: Stop grafana in Docker
   delegate_to: '{{ backup_server_ip }}'
-  ansible.builtin.apt:
-    pkg:
-    - grafana
-  register: apt_status
-  until: apt_status is success
-  delay: 6
-  retries: 10
+  command: /usr/bin/docker stop grafana
+  ignore_errors: True
 
-- name: Make sure Grafana unit is restarted and enabled on Backup Server
+- name: Remove grafana in Docker
+  delegate_to: '{{ backup_server_ip }}'
+  command: /usr/bin/docker rm grafana 
+  ignore_errors: True
+
+#- name: Run grafana in Docker
+#  delegate_to: '{{ backup_server_ip }}'
+#  command: /usr/bin/docker run -d --name=grafana -p 3000:3000 grafana/grafana
+
+#- name: Ensure grafana image is pulled
+#  delegate_to: '{{ backup_server_ip }}'
+#  docker_image:
+#    name: grafana/grafana
+#    source: "pull"
+#    state: present
+#    pull:
+#      platform: amd64
+#  register: result
+#  retries: 6
+#  delay: 10
+#  until: result is not failed
+
+- name: Ensure grafana image is pulled
+  delegate_to: '{{ backup_server_ip }}'
+  command: docker pull grafana/grafana 
+
+- name: Ensure grafana.service installed
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.template:
+    src: "{{ role_path }}/templates/grafana.service.j2"
+    dest: "/etc/systemd/system/grafana.service"
+    mode: 0644
+
+- name: Start and enable new grafana unit on Backup Server
   delegate_to: '{{ backup_server_ip }}'
   ansible.builtin.systemd:
-    state: restarted
-    name: grafana-server
+    state: started
+    name: grafana
     enabled: yes
 
 - name: Check if Diffie Hellman file already exists
@@ -174,16 +158,6 @@
   args:
     creates: '/etc/apache2/mods-enabled/ssl.load'
 
-
-#- name: Template the HTTP site for Grafana on Backup Server
-#  delegate_to: '{{ backup_server_ip }}'
-#  ansible.builtin.template:
-#    src: '{{ role_path }}/templates/apache-http.conf.j2'
-#    dest: '/etc/apache2/sites-available/{{ grafana_url }}-http.conf'
-#    owner: root
-#    group: root
-#    mode: '0644'
-
 - name: Template the HTTPS site for Grafana on Backup Server
   delegate_to: '{{ backup_server_ip }}'
   ansible.builtin.template:
@@ -192,10 +166,6 @@
     owner: root
     group: root
     mode: '0644'
-
-#- name: Enable HTTP site for Grafana on Backup Server
-#  delegate_to: '{{ backup_server_ip }}'
-#  ansible.builtin.command: 'a2ensite {{ grafana_url }}-http.conf'
 
 - name: Enable HTTPS site for Grafana on Backup Server
   delegate_to: '{{ backup_server_ip }}'
@@ -224,18 +194,112 @@
     name: apache2
     enabled: yes
 
-- name: Set admin users password for grafana-server
-  delegate_to: '{{ backup_server_ip }}'
-  command: 'grafana-cli admin reset-admin-password {{ grafana_admin_password }}'
+- name: Pause for 1 minute so Grafana can warm up
+  pause:
+    minutes: 1
 
-- name: Create local prometheus datasource
+#- name: Set admin users password for grafana-server 1
+#  delegate_to: '{{ backup_server_ip }}'
+#  shell: ln -s /var/lib/grafana  /usr/share/grafana/data
+
+#- name: Set admin users password for grafana-server 2
+#  delegate_to: '{{ backup_server_ip }}'
+#  shell: ln -s /var/log/grafana /usr/share/grafana/data/logs
+
+#- name: Set admin users password for grafana-server 3
+#  delegate_to: '{{ backup_server_ip }}'
+#  shell: 'grafana-cli --homepath "/usr/local/share/grafana" admin reset-admin-password "{{ grafana_admin_password }}"'
+
+#- name: Update admin Grafana user
+#  community.grafana.grafana_user:
+#    name: "Administrator"
+#    email: "{{ grafana_email }}"
+#    login: admin
+#    password: "{{ grafana_admin_password }}"
+#    is_admin: true
+#    state: present
+#    url: "https://{{ grafana_url }}"
+#    grafana_user: "admin"
+#    grafana_password: "admin"
+
+- name: Create local Prometheus datasource
   community.grafana.grafana_datasource:
     name: local_prometheus
-    # In the web interface direct access is named 'Server'. (trying instead of 'proxy')
-    access: direct
+    access: proxy
     ds_type: prometheus
     ds_url: 'http://127.0.0.1:9090'
-    tls_skip_verify: true
     url: "https://{{ grafana_url }}"
     grafana_user: "admin"
     grafana_password: "{{ grafana_admin_password }}"
+
+- name: Create local Node Exporter datasource
+  community.grafana.grafana_datasource:
+    name: local_node_exporter
+    access: proxy
+    ds_type: prometheus
+    ds_url: 'http://127.0.0.1:9100'
+    url: "https://{{ grafana_url }}"
+    grafana_user: "admin"
+    grafana_password: "{{ grafana_admin_password }}"
+
+- name: Collect AWX public IP
+  set_fact:
+    awx_public_ip: "{{ ansible_eth0.ipv4.address }}"
+
+- name: Create AWX Prometheus datasource
+  community.grafana.grafana_datasource:
+    name: awx_prometheus
+    access: proxy
+    ds_type: prometheus
+    ds_url: 'http://{{ awx_public_ip }}:9090'
+    grafana_url: "https://{{ grafana_url }}"
+    grafana_user: "admin"
+    grafana_password: "{{ grafana_admin_password }}"
+
+- name: Create AWX Node Exporter datasource
+  community.grafana.grafana_datasource:
+    name: awx_node_exporter
+    access: proxy
+    ds_type: prometheus
+    ds_url: 'http://{{ awx_public_ip }}:9100'
+    grafana_url: "https://{{ grafana_url }}"
+    grafana_user: "admin"
+    grafana_password: "{{ grafana_admin_password }}"
+
+- name: Import Grafana dashboard Prometheus
+  community.grafana.grafana_dashboard:
+    folder: General
+    dashboard_url: https://grafana.com/api/dashboards/15489/revisions/2/download
+    state: present
+    grafana_url: "https://{{ grafana_url }}"
+    grafana_user: "admin"
+    grafana_password: "{{ grafana_admin_password }}"
+
+- name: Import Grafana dashboard Node Exporter
+  community.grafana.grafana_dashboard:
+    folder: General
+    dashboard_url: https://grafana.com/api/dashboards/1860/revisions/29/download
+    state: present
+    grafana_url: "https://{{ grafana_url }}"
+    grafana_user: "admin"
+    grafana_password: "{{ grafana_admin_password }}"
+
+- name: Create a Grafana folder called 'K3S'
+  community.grafana.grafana_folder:
+    title: "K3S"
+    state: present
+    grafana_url: "https://{{ grafana_url }}"
+    grafana_user: "admin"
+    grafana_password: "{{ grafana_admin_password }}"
+
+- name: Import Grafana dashboard K3S cluster monitoring
+  community.grafana.grafana_dashboard:
+    folder: K3S
+    dashboard_url: https://grafana.com/api/dashboards/15282/revisions/1/download
+    state: present
+    grafana_url: "https://{{ grafana_url }}"
+    grafana_user: "admin"
+    grafana_password: "{{ grafana_admin_password }}"
+
+
+
