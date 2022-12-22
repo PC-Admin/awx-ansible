@@ -289,3 +289,13 @@
   template:
     src: '{{ role_path }}/templates/borg-config.yaml.j2'
     dest: '/home/borg/.config/borgmatic/config.yaml'
+
+- name: Delete the AWX/Automation Controller session token for executing modules
+  awx.awx.tower_token:
+    description: 'AWX/Automation Controller Session Token'
+    scope: "write"
+    state: absent
+    existing_token_id: "{{ awx_session_token.ansible_facts.tower_token.id }}"
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes

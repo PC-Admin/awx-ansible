@@ -34,40 +34,11 @@ $ ansible-galaxy collection install community.grafana
 
 Create folder for each host at: ./inventory/host_vars/
 
-Record these variables into each hosts vars.yml:
-```
-# Your organisations name
-org_name: Example
-# URL of the AWX instance.
-awx_url: awx.example.org
-# AWX database password.
-pg_password: strong-password
-# AWX admin user password.
-admin_password: strong-password
-# AWX secrets password.
-secret_key: strong-password
-# Time periods for schedules, eg: 
-# 'MINUTELY', 'HOURLY', 'DAILY', 'WEEKLY','MONTHLY'
-update_schedule_frequency: 'WEEKLY'
-# Number of hours/days/weeks to schedule updates too:
-update_schedule_interval: 4
-# Project repository URL.
-deploy_source: https://github.com/PC-Admin/project-repository.git
-# Branch of the project repository.
-deploy_branch: testing
-# The organisations email for LetsEncrypt.
-certbot_email: michael@perthchat.org
-```
-
-If using the backup server also configure:
-```
-backup_enabled: true
-backup_server_url: backup.example.org
-```
+Record each hosts variables into each hosts ./inventory/host_vars/example.org/vars.yml file.
 
 
 3) Run the playbook with the following tags:
 
 `$ ansible-playbook -v -i ./inventory/hosts -t "setup,setup-firewall,master-token,configure-awx,setup-rancher,setup-backup,setup-monitor" setup.yml`
 
-NOTE: If using the monitor, you need to immediately go to your {{ grafana_url }} and set the initial administrator password manually.
+NOTE: If using the monitor for the first time, you need to immediately go to your {{ grafana_url }} and set the initial administrator password manually.

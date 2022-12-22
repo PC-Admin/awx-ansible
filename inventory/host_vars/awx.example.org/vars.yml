@@ -1,49 +1,43 @@
 
 # Organisation Settings
-org_name: ExampleOrg
+org_name: ExampleOrg    # Your organisations name
 
 # URL Settings
-awx_url: panel.example.org
-rancher_url: rancher.example.org
-certbot_email: example@email.com
+awx_url: panel.example.org          # URL of the AWX server/service.
+rancher_url: rancher.example.org    # URL of Rancher service.
+certbot_email: example@email.com    # The organisations email for LetsEncrypt.
 
-# Cloudflare
-cloudflare_api_key: << cloudflare API key >>
-cloudflare_email: example@email.com
-
-# Rancher settings
-rancher_password: << strong-password >>
-
-# AWX/Automation Controller Settings
+# AWX Settings
 admin_username: admin
-admin_password: << strong-password >>
-secret_key: << strong-password >>
-pg_password: << strong-password >>
+admin_password: << strong-password >> # AWX admin user password.
+secret_key: << strong-password >>     # AWX secrets password.
+pg_password: << strong-password >>    # AWX database password.
 
 # Deploy All Settings
 update_schedule_start: '20210101T000000'
 update_schedule_frequency: 'HOURLY'
 update_schedule_interval: 1
 
+# Repository Settings
+deploy_source: https://gitlab.com/PC-Admin/awx-ansible    # Repository of this AWX playbook
+deploy_branch: main
+
+# Rancher settings
+rancher_enabled: false
+rancher_password: << strong-password >>   # Rancher users password
+
 # Backup Server Settings
 backup_enabled: false
-backup_server_ip: 123.456.789.255
-backup_passphrase: << strong-password >>
-backup_retention_days: 90
-
-# Backup AWX Settings
-backup_awx_schedule_start: '20200101T000000'
+backup_server_ip: 123.456.789.255           # IP of the backup server, be sure you can ssh to it
+backup_passphrase: << strong-password >>    # Borgbackup encryption passphrase
+backup_retention_days: 90                   # Borgbackup retention period
+backup_awx_schedule_start: '20200101T000000'  # Borgbackup Job Template Schedule
 backup_awx_schedule_frequency: 'HOURLY'
 backup_awx_schedule_interval: 1
 
-# Repository Settings
-deploy_source: https://gitlab.com/PC-Admin/awx-ansible
-deploy_branch: main
-
 # Monitor Settings
 monitor_enabled: false
-grafana_url: grafana.example.org
+grafana_url: grafana.example.org                    # URL of the Grafana service
 grafana_com_username: << grafana.com username >>
 grafana_com_token: << grafana.com API token >>
-grafana_email: example@email.com
 #grafana_admin_default_password: admin

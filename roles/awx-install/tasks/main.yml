@@ -22,4 +22,5 @@
 
 # Deploy Rancher for Kubernetes management
 - import_tasks: "{{ role_path }}/tasks/rancher_setup.yml"
+  when: rancher_enabled | bool
   tags: [ 'never', 'setup-rancher']
