@@ -1,0 +1,15 @@
+---
+
+- name: Add snap/snapd package
+  apt:
+    pkg:
+    - snap
+  register: apt_status
+  until: apt_status is success
+  delay: 6
+  retries: 10
+
+- name: Install K9s, a kubernetes inspection tool
+  community.general.snap:
+    name:
+      - k9s

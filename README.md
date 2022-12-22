@@ -26,8 +26,8 @@ To configure and install this AWX setup on your own server, follow the [Install_
 - Fix AWX token generation. [done]
 - Fix Rancher. [done]
 - Add basic monitoring with Node Exporter. [done]
+- Refine prometheus/grafana monitoring. [done]
 - Automate backups using borg. [in progress]
-- Refine prometheus/grafana monitoring. [in progress]
 - Automate recovery. []
 - Automate routine recovery testing for the AWX setup. []
 

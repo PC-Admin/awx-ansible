@@ -70,15 +70,15 @@
   delay: 6
   retries: 10
 
-- name: Stop grafana in Docker
-  delegate_to: '{{ backup_server_ip }}'
-  command: /usr/bin/docker stop grafana
-  ignore_errors: True
+#- name: Stop grafana in Docker
+#  delegate_to: '{{ backup_server_ip }}'
+#  command: /usr/bin/docker stop grafana
+#  ignore_errors: True
 
-- name: Remove grafana in Docker
-  delegate_to: '{{ backup_server_ip }}'
-  command: /usr/bin/docker rm grafana 
-  ignore_errors: True
+#- name: Remove grafana in Docker
+#  delegate_to: '{{ backup_server_ip }}'
+#  command: /usr/bin/docker rm grafana 
+#  ignore_errors: True
 
 #- name: Run grafana in Docker
 #  delegate_to: '{{ backup_server_ip }}'
@@ -226,77 +226,54 @@
     name: apache2
     enabled: yes
 
-- name: Pause for 1 minute so Grafana can warm up
+- name: Pause for 15 seconds so Grafana can warm up
   pause:
-    minutes: 1
-
-#- name: Set admin users password for grafana-server 1
-#  delegate_to: '{{ backup_server_ip }}'
-#  shell: ln -s /var/lib/grafana  /usr/share/grafana/data
-
-#- name: Set admin users password for grafana-server 2
-#  delegate_to: '{{ backup_server_ip }}'
-#  shell: ln -s /var/log/grafana /usr/share/grafana/data/logs
-
-#- name: Set admin users password for grafana-server 3
-#  delegate_to: '{{ backup_server_ip }}'
-#  shell: 'grafana-cli --homepath "/usr/local/share/grafana" admin reset-admin-password "{{ grafana_admin_password }}"'
-
-#- name: Update admin Grafana user
-#  community.grafana.grafana_user:
-#    name: "Administrator"
-#    email: "{{ grafana_email }}"
-#    login: admin
-#    password: "{{ grafana_admin_password }}"
-#    is_admin: true
-#    state: present
-#    url: "https://{{ grafana_url }}"
-#    grafana_user: "admin"
-#    grafana_password: "admin"
+    seconds: 15
 
 - name: Create local Prometheus datasource
   community.grafana.grafana_datasource:
-    name: local_prometheus
+    name: "{{ grafana_url }}"
     access: proxy
     ds_type: prometheus
-    ds_url: 'http://172.17.0.1:9090'
+    ds_url: 'http://{{ backup_server_ip }}:9090'
     url: "https://{{ grafana_url }}"
     grafana_user: "admin"
-    grafana_password: "{{ grafana_admin_password }}"
+    grafana_password: "{{ grafana_admin_default_password }}"
 
-- name: Create local Node Exporter datasource
-  community.grafana.grafana_datasource:
-    name: local_node_exporter
-    access: proxy
-    ds_type: prometheus
-    ds_url: 'http://172.17.0.1:9100'
-    url: "https://{{ grafana_url }}"
-    grafana_user: "admin"
-    grafana_password: "{{ grafana_admin_password }}"
+#- name: Create local Node Exporter datasource
+#  community.grafana.grafana_datasource:
+#    name: local_node_exporter
+#    access: proxy
+#    ds_type: prometheus
+#    ds_url: 'http://{{ backup_server_ip }}:9100'
+#    url: "https://{{ grafana_url }}"
+#    grafana_user: "admin"
+#    grafana_password: "{{ grafana_admin_default_password }}"
 
-- name: Collect AWX public IP
+- name: Collect AWX Servers public IP
   set_fact:
     awx_public_ip: "{{ ansible_eth0.ipv4.address }}"
 
 - name: Create AWX Prometheus datasource
   community.grafana.grafana_datasource:
-    name: awx_prometheus
+    name: "{{ awx_url }}"
     access: proxy
     ds_type: prometheus
+    is_default: true
     ds_url: 'http://{{ awx_public_ip }}:9090'
     grafana_url: "https://{{ grafana_url }}"
     grafana_user: "admin"
-    grafana_password: "{{ grafana_admin_password }}"
+    grafana_password: "{{ grafana_admin_default_password }}"
 
-- name: Create AWX Node Exporter datasource
-  community.grafana.grafana_datasource:
-    name: awx_node_exporter
-    access: proxy
-    ds_type: prometheus
-    ds_url: 'http://{{ awx_public_ip }}:9100'
-    grafana_url: "https://{{ grafana_url }}"
-    grafana_user: "admin"
-    grafana_password: "{{ grafana_admin_password }}"
+#- name: Create AWX Node Exporter datasource
+#  community.grafana.grafana_datasource:
+#    name: awx_node_exporter
+#    access: proxy
+#    ds_type: prometheus
+#    ds_url: 'http://{{ awx_public_ip }}:9100'
+#    grafana_url: "https://{{ grafana_url }}"
+#    grafana_user: "admin"
+#    grafana_password: "{{ grafana_admin_default_password }}"
 
 - name: Import Grafana dashboard 'Prometheus 2.0 Overview'
   community.grafana.grafana_dashboard:
@@ -305,7 +282,7 @@
     state: present
     grafana_url: "https://{{ grafana_url }}"
     grafana_user: "admin"
-    grafana_password: "{{ grafana_admin_password }}"
+    grafana_password: "{{ grafana_admin_default_password }}"
 
 - name: Import Grafana dashboard Node Exporter
   community.grafana.grafana_dashboard:
@@ -314,7 +291,7 @@
     state: present
     grafana_url: "https://{{ grafana_url }}"
     grafana_user: "admin"
-    grafana_password: "{{ grafana_admin_password }}"
+    grafana_password: "{{ grafana_admin_default_password }}"
 
 - name: Create a Grafana folder called 'K3S'
   community.grafana.grafana_folder:
@@ -322,7 +299,7 @@
     state: present
     grafana_url: "https://{{ grafana_url }}"
     grafana_user: "admin"
-    grafana_password: "{{ grafana_admin_password }}"
+    grafana_password: "{{ grafana_admin_default_password }}"
 
 - name: Import Grafana dashboard K3S cluster monitoring
   community.grafana.grafana_dashboard:
@@ -331,7 +308,7 @@
     state: present
     grafana_url: "https://{{ grafana_url }}"
     grafana_user: "admin"
-    grafana_password: "{{ grafana_admin_password }}"
+    grafana_password: "{{ grafana_admin_default_password }}"
 
 - name: Import Grafana dashboard 'Kubernetes Cluster'
   community.grafana.grafana_dashboard:
@@ -340,6 +317,17 @@
     state: present
     grafana_url: "https://{{ grafana_url }}"
     grafana_user: "admin"
-    grafana_password: "{{ grafana_admin_password }}"
+    grafana_password: "{{ grafana_admin_default_password }}"
 
-
+# This doesn't set the admin password or get you past the initial interactive prompt :/
+#- name: Update admin Grafana users password
+#  community.grafana.grafana_user:
+#    name: "{{ org_name }} Administrator"
+#    email: "{{ grafana_email }}"
+#    login: admin
+#    password: "{{ grafana_admin_new_password }}"
+#    is_admin: true
+#    state: present
+#    url: "https://{{ grafana_url }}"
+#    grafana_user: "admin"
+#    grafana_password: "{{ grafana_admin_default_password }}"

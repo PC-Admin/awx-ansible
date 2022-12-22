@@ -5,11 +5,11 @@ org_name: ExampleOrg
 # URL Settings
 awx_url: panel.example.org
 rancher_url: rancher.example.org
-certbot_email: michael@perthchat.org
+certbot_email: example@email.com
 
 # Cloudflare
 cloudflare_api_key: << cloudflare API key >>
-cloudflare_email: cloudflareaccount@protonmail.com
+cloudflare_email: example@email.com
 
 # Rancher settings
 rancher_password: << strong-password >>
@@ -25,19 +25,25 @@ update_schedule_start: '20210101T000000'
 update_schedule_frequency: 'HOURLY'
 update_schedule_interval: 1
 
-# Repository Settings
-deploy_source: https://github.com/spantaleev/matrix-docker-ansible-deploy.git
-deploy_branch: master
-
 # Backup Server Settings
 backup_enabled: false
 backup_server_ip: 123.456.789.255
 backup_passphrase: << strong-password >>
 backup_retention_days: 90
 
+# Backup AWX Settings
+backup_awx_schedule_start: '20200101T000000'
+backup_awx_schedule_frequency: 'HOURLY'
+backup_awx_schedule_interval: 1
+
+# Repository Settings
+deploy_source: https://gitlab.com/PC-Admin/awx-ansible
+deploy_branch: main
+
 # Monitor Settings
-monitor_enabled: true
+monitor_enabled: false
 grafana_url: grafana.example.org
 grafana_com_username: << grafana.com username >>
 grafana_com_token: << grafana.com API token >>
-grafana_admin_password: admin
+grafana_email: example@email.com
+#grafana_admin_default_password: admin

@@ -96,6 +96,22 @@
     proto: tcp
   when: monitor_enabled | bool
 
+- name: UFW add port 9090 TCP (Prometheus) on Backup Server
+  delegate_to: '{{ backup_server_ip }}'
+  ufw:
+    rule: allow
+    port: '9090'
+    proto: tcp
+  when: monitor_enabled | bool
+
+- name: UFW add port 9100 TCP (Prometheus Node Exporter) on Backup Server
+  delegate_to: '{{ backup_server_ip }}'
+  ufw:
+    rule: allow
+    port: '9100'
+    proto: tcp
+  when: monitor_enabled | bool
+
 - name: UFW default allow outgoing traffic on Backup Server
   delegate_to: '{{ backup_server_ip }}'
   ufw:

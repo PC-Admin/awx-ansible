@@ -60,3 +60,11 @@
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes
+
+- name: Set the value of TOWER_URL_BASE
+  awx.awx.settings:
+    name: "TOWER_URL_BASE"
+    value: "https://{{ awx_url }}"
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes

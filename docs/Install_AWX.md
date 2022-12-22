@@ -4,29 +4,30 @@
 How to install this AWX setup.
 
 
-## Provision a Server
+## Provision the Servers
 
 Provision a Debian 11 or Ubuntu 22.04 server with >=8GB RAM and a public IP, then setup SSH access to the root account, this will be our AWX server.
 
 If you plan on using a backup/monitor server (recommended), provision a Debian 11 or Ubuntu 22.04 server with >=4GB RAM and setup SSH access to the root account.
 
 
-## Setup DNS entry for it:
+## Setup DNS Entries for it
 
-Map an: 
+1) A/AAAA record for awx.example.org to the servers IP.
 
-A/AAAA record for panel.example.org to the servers IP.
-A/AAAA record for rancher.example.org to the servers IP, 
-    or a CNAME record for it pointing to panel.example.org.
-optionally, an A/AAAA record for grafana.example.org to the backup/monitor servers IP.
+2) optionally, an A/AAAA record for rancher.example.org to the servers IP, 
+    or a CNAME record for it pointing to awx.example.org.
+
+3) optionally, an A/AAAA record for grafana.example.org to the backup/monitor servers IP.
 
 
 ## Install
 
 1) Install the following ansible-galaxy packages on the controller:
-
-`$ ansible-galaxy collection install --force awx.awx:21.9.0`
-`$ ansible-galaxy collection install community.grafana`
+```
+$ ansible-galaxy collection install --force awx.awx:21.9.0
+$ ansible-galaxy collection install community.grafana
+```
 
 
 2) Edit host into: [./inventory/hosts](./inventory/hosts)
@@ -70,10 +71,3 @@ backup_server_url: backup.example.org
 `$ ansible-playbook -v -i ./inventory/hosts -t "setup,setup-firewall,master-token,configure-awx,setup-rancher,setup-backup,setup-monitor" setup.yml`
 
 NOTE: If using the monitor, you need to immediately go to your {{ grafana_url }} and set the initial administrator password manually.
-
-
-4) In AWX, set the base URL
-
-Go into: Settings > Miscellaneous System Settings > Edit
-
-Alter the value of 'Base URL of the Tower host' to your AWX systems URL.
