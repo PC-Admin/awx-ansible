@@ -12,3 +12,5 @@
 
     - name: "Runs a borgmatic backup on the AWX host OS."
       command: borgmatic --config /home/borg/.config/borgmatic/config.yaml
+      environment:
+        BORG_PASSPHRASE: "{{ BORG_PASSPHRASE }}"

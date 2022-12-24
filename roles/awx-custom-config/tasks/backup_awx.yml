@@ -44,6 +44,7 @@
 - name: Create borg user on AWX server
   ansible.builtin.user:
     name: borg
+    #shell: /bin/bash
     shell: /bin/rbash
     password: '!'
     generate_ssh_key: yes
@@ -70,10 +71,21 @@
   set_fact:
     ssh_public_key: "{{ lookup('ansible.builtin.file','{{ awx_ssh_pubkey }}') }}"
 
-- name: Set authorized key taken from lookup data
+- name: Set authorized key to allow this public key on the AWX Server
   ansible.builtin.lineinfile:
     path: /home/borg/.ssh/authorized_keys
     regexp: '^.*$'
+    line: "{{ ssh_public_key }}"
+    create: true
+    owner: borg
+    group: borg
+    mode: '0600'
+
+- name: Set authorized key to allow this public key on the Backup Server
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.lineinfile:
+    path: /home/borg/.ssh/authorized_keys
+    regexp: '^{{ ssh_public_key }}$'
     line: "{{ ssh_public_key }}"
     create: true
     owner: borg
@@ -161,7 +173,7 @@
     project: "Ansible Repository"
     playbook: backup.yml
     credential: "AWX SSH Key"
-    extra_vars: { awx_url: "{{ awx_url }}" }
+    extra_vars: { awx_url: "{{ awx_url }}", BORG_PASSPHRASE: "{{ backup_passphrase }}" }
     state: present
     verbosity: 1
     tower_host: "https://{{ awx_url }}"
@@ -211,16 +223,16 @@
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes
 
-- name: Create '~ List AWX Backups' job template
+- name: Create 'Backup AWX [List Backups]' job template
   awx.awx.tower_job_template:
-    name: "~ List AWX Backups"
+    name: "Backup AWX [List Backups]"
     description: "Lists the local dumps on the AWX server and the remote borgmatic history."
     job_type: run
     inventory: "AWX Server"
     project: "Ansible Repository"
     playbook: backups-list.yml
     credential: "AWX SSH Key"
-    extra_vars: { awx_url: "{{ awx_url }}" }
+    extra_vars: { awx_url: "{{ awx_url }}", backup_server_ip: "{{ backup_server_ip }}", BORG_PASSPHRASE: "{{ backup_passphrase }}" }
     state: present
     verbosity: 1
     tower_host: "https://{{ awx_url }}"
@@ -413,6 +425,15 @@
     mode: 0554
     owner: root
     group: root
+
+- name: Save list.sh file on AWX Server
+  template:
+    src: '{{ role_path }}/templates/list.sh'
+    dest: '/data/backup/list.sh'
+    attributes: "+i"
+    mode: 0554
+    owner: borg
+    group: borg
 
 - name: Allow borg user to run the cleanup.sh script as root
   lineinfile:

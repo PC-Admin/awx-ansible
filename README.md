@@ -19,8 +19,7 @@ To configure and install this AWX setup on your own server, follow the [Install_
 
 ## To Do
 
-- Allow deployment onto Ubuntu 20.04 and 22.04. [done]
-- Update AWX to newer version. 1.1.0 [done]
+- Update AWX to newer version. 21.9.0/1.1.0 [done]
 - Update awx-on-k3s to newer version. 1.1.0 [done]
 - Update k9s to latest version. [done]
 - Fix AWX token generation. [done]
@@ -28,7 +27,9 @@ To configure and install this AWX setup on your own server, follow the [Install_
 - Add basic monitoring with Node Exporter. [done]
 - Refine prometheus/grafana monitoring. [done]
 - Automate backups using borg. [done]
-- Automate recovery. [in progress]
+- Add template for listing current backups on local and remote host. [done]
+- Make AWX regenerate the SSH key for borg@{{ awx_url }} every time. []
+- Automate recovery. []
 - Automate routine recovery testing for the AWX setup. []
 - Get Apache onto docker too? []
 - Add email alerts for system issues []
