@@ -58,6 +58,14 @@
     group: borg
     mode: '0700'
 
+- name: Create borg users ~/.cache if it does not exist
+  ansible.builtin.file:
+    path: /home/borg/.cache/
+    state: directory
+    owner: borg
+    group: borg
+    mode: '0755'
+
 - name: Set variable for public key content
   set_fact:
     ssh_public_key: "{{ lookup('ansible.builtin.file','{{ awx_ssh_pubkey }}') }}"
@@ -377,7 +385,7 @@
   template:
     src: '{{ role_path }}/templates/cleanup.sh.j2'
     dest: '/data/backup/cleanup.sh'
-    mode: 0550
+    mode: 0554
     owner: root
     group: root
 
