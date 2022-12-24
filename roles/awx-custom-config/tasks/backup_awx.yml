@@ -211,6 +211,22 @@
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes
 
+- name: Create '~ List AWX Backups' job template
+  awx.awx.tower_job_template:
+    name: "~ List AWX Backups"
+    description: "Lists the local dumps on the AWX server and the remote borgmatic history."
+    job_type: run
+    inventory: "AWX Server"
+    project: "Ansible Repository"
+    playbook: backups-list.yml
+    credential: "AWX SSH Key"
+    extra_vars: { awx_url: "{{ awx_url }}" }
+    state: present
+    verbosity: 1
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes
+
 - name: Delete the AWX session token for executing modules
   awx.awx.tower_token:
     description: 'AWX Session Token'

@@ -1,0 +1,16 @@
+---
+
+- name: "Lists the Borgmatic backup history on the Backup Server."
+  hosts: "{{ awx_url }}"
+  become: true
+  become_user: borg
+  gather_facts: false
+
+  tasks:
+    - name: "List the local dumps on the AWX Server."
+      delegate_to: "{{ backup_server_ip }}"
+      command: ls -l /data/backup/tower*
+
+    - name: "Lists the Borgmatic backup history on the Backup Server."
+      delegate_to: "{{ backup_server_ip }}"
+      command: borg list ~/AWX/
