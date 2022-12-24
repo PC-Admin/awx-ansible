@@ -16,6 +16,16 @@
     validate_certs: yes
   register: awx_session_token
 
+- name: Add Backup Server host to the AWX Server inventory
+  awx.awx.tower_host:
+    name: "{{ backup_server_ip }}"
+    description: "The Backup Server, accessed at its IP."
+    inventory: "AWX Server"
+    state: present
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes
+
 - name: Add 'AWX on K3s' project to AWX admins organisation
   awx.awx.tower_project:
     name: "AWX on K3s"
@@ -31,20 +41,14 @@
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes
 
-#- name: Load public SSH key for connecting to borg user on AWX Server
-#  delegate_to: localhost
-#  slurp:
-#   src: "{{ awx_ssh_pubkey }}"
-#  register: slurped_pubkey
-
-#- name: Set authorized key taken from slurped data
-#  become: yes
-#  become_user: borg
-#  ansible.posix.authorized_key:
-#    user: borg
-#    state: present
-#    key: "{{ slurped_pubkey.content | b64decode }}"
-#    exclusive: true
+- name: Create borg user on AWX server
+  ansible.builtin.user:
+    name: borg
+    shell: /bin/bash
+    password: '!'
+    generate_ssh_key: yes
+    ssh_key_type: ed25519
+    ssh_key_file: .ssh/borgmatic
 
 - name: Create borg users ~/.ssh if it does not exist
   ansible.builtin.file:
@@ -125,9 +129,9 @@
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes
 
-- name: Create 'Backup AWX [K3S Dump]' job template
+- name: Create 'Backup AWX [Local Dump]' job template
   awx.awx.tower_job_template:
-    name: "Backup AWX [K3S Dump]"
+    name: "Backup AWX [Local Dump]"
     description: "Backs up the AWX host system, dumping a snapshot of it to the local disk."
     job_type: run
     inventory: "Localhost"
@@ -140,37 +144,61 @@
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes
 
-- name: Collect timezone of AWX server (Debian and derivatives only)
-  command: cat /etc/timezone
-  register: timezone_output
-
-- name: Create an rrule string for scheduling 'Backup AWX [K3S Dump]'
-  set_fact:
-    rrule_line_backup_awx: "DTSTART;TZID={{ timezone_output.stdout }}:{{ backup_awx_schedule_start }} RRULE:FREQ={{ backup_awx_schedule_frequency }};INTERVAL={{ backup_awx_schedule_interval }}"
-
-- name: Build a schedule for 'Backup AWX [K3S Dump]' job template
-  awx.awx.tower_schedule:
-    name: "Backup AWX [K3S Dump]"
-    enabled: yes
+- name: Create 'Backup AWX [Borgmatic]' job template
+  awx.awx.tower_job_template:
+    name: "Backup AWX [Borgmatic]"
+    description: "Backs up the AWX host system to the external Backup Server."
+    job_type: run
+    inventory: "AWX Server"
+    project: "Ansible Repository"
+    playbook: backup.yml
+    credential: "AWX SSH Key"
+    extra_vars: { awx_url: "{{ awx_url }}" }
     state: present
-    unified_job_template: "Backup AWX [K3S Dump]"
-    #extra_data: "{{ lookup('file', '{{ role_path }}/extra-vars/update_all.json') }}"
-    rrule: "{{ rrule_line_backup_awx }}"
+    verbosity: 1
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes
 
-- name: Create 'Backup AWX [Borgmatic]' job template
-  awx.awx.tower_job_template:
-    name: "Backup AWX [Borgmatic]"
-    description: "Backs up the AWX/Ansible Controllers host system."
-    job_type: run
-    inventory: "AWX Server"
-    project: "AWX on K3s"
-    playbook: '/projects/backup.yml'
-    job_tags: ['run-backup']
+- name: Create 'Backup AWX' workflow template
+  awx.awx.workflow_job_template:
+    name: "Backup AWX"
+    description: "Backup the AWX server by first making a local dump, then using borgmatic to back it up."
+    workflow_nodes:
+      - identifier: "Local Dump"
+        job_type: run
+        unified_job_template:
+          name: "Backup AWX [Local Dump]"
+          type: job_template
+        related:
+          success_nodes:
+            - identifier: "Borgmatic"
+          failure_nodes: []
+          always_nodes: []
+      - identifier: "Borgmatic"
+        job_type: run
+        unified_job_template:
+          name: "Backup AWX [Borgmatic]"
+          type: job_template
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes
+
+- name: Collect timezone of AWX server (Debian and derivatives only)
+  command: cat /etc/timezone
+  register: timezone_output
+
+- name: Create an rrule string for scheduling 'Backup AWX'
+  set_fact:
+    rrule_line_backup_awx: "DTSTART;TZID={{ timezone_output.stdout }}:{{ backup_awx_schedule_start }} RRULE:FREQ={{ backup_awx_schedule_frequency }};INTERVAL={{ backup_awx_schedule_interval }}"
+
+- name: Build a schedule for 'Backup AWX' workflow template
+  awx.awx.tower_schedule:
+    name: "Backup AWX"
+    enabled: yes
     state: present
-    verbosity: 1
+    unified_job_template: "Backup AWX"
+    rrule: "{{ rrule_line_backup_awx }}"
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes
@@ -199,7 +227,7 @@
   ansible.builtin.apt:
     pkg:
     - borgmatic
-    - inotify-tools
+    - sudo
   register: apt_status
   until: apt_status is success
   delay: 6
@@ -212,15 +240,6 @@
     mode: 0700
     owner: root
     group: root
-
-- name: Create borg user on AWX server
-  ansible.builtin.user:
-    name: borg
-    shell: /bin/bash
-    password: '!'
-    generate_ssh_key: yes
-    ssh_key_type: ed25519
-    ssh_key_file: .ssh/borgmatic
 
 - name: Create borg user on backup server
   delegate_to: '{{ backup_server_ip }}'
@@ -315,6 +334,7 @@
     path: /home/borg/.profile
     regexp: '^export BORG_PASSPHRASE=./*$'
     line: "export BORG_PASSPHRASE={{ backup_passphrase }}"
+    create: yes
     owner: borg
     group: borg
     mode: '0600'
@@ -325,6 +345,7 @@
     path: /home/borg/.profile
     regexp: '^export BORG_PASSPHRASE=./*$'
     line: "export BORG_PASSPHRASE={{ backup_passphrase }}"
+    create: yes
     owner: borg
     group: borg
     mode: '0600'
@@ -352,37 +373,18 @@
     src: '{{ role_path }}/templates/borg-config.yaml.j2'
     dest: '/home/borg/.config/borgmatic/config.yaml'
 
-- name: Save the borg-trigger shell script on AWX
+- name: Save cleanup.sh file on AWX Server
   template:
-    src: '{{ role_path }}/templates/borg-trigger.sh.j2'
-    dest: '/home/borg/borg-trigger.sh'
-    mode: 0755
-    owner: borg
-    group: borg
+    src: '{{ role_path }}/templates/cleanup.sh.j2'
+    dest: '/data/backup/cleanup.sh'
+    mode: 0550
+    owner: root
+    group: root
 
-- name: Save borg-trigger service template on AWX Server
-  ansible.builtin.blockinfile:
-    path: /etc/systemd/system/borg-trigger.service
-    create: true
-    block: |
-      [Service]
-      ExecStart=/home/borg/borg-trigger.sh
-      ExecRestart=kill $(ps -fu borg | grep borg-trigger.sh | awk '{print $2}') && /home/borg/borg-trigger.sh
-      ExecStop=kill $(ps -fu borg | grep borg-trigger.sh | awk '{print $2}')
-      Restart=always
-      RestartSec=1
-      StandardOutput=syslog+console
-      StandardError=syslog+console
-      SyslogIdentifier=borg-trigger
-      User=borg
-      Group=borg
-
-      [Install]
-      WantedBy=multi-user.target
-
-- name: Restart new borg-trigger service on Backup Server
-  ansible.builtin.systemd:
-    state: restarted
-    daemon-reload: true
-    name: borg-trigger
-    enabled: yes
+- name: Allow borg user to run the cleanup.sh script as root
+  lineinfile:
+    dest: /etc/sudoers
+    state: present
+    insertafter: "# User privilege specification"
+    line: "borg ALL=(root) NOPASSWD: /data/backup/cleanup.sh"
+    validate: visudo -cf %s

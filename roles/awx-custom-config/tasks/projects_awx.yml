@@ -3,7 +3,7 @@
 - name: Add 'Ansible Repository' project to AWX admins organisation
   awx.awx.tower_project:
     name: "Ansible Repository"
-    description: "An example playbook for this AWX/Ansible Controller setup."
+    description: "An example playbook for this AWX setup."
     organization: "{{ org_name }}"
     scm_type: git
     scm_url: "{{ deploy_source }}"
