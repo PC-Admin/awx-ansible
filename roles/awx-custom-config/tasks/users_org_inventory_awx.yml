@@ -18,20 +18,20 @@
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes
 
-- name: Add inventory to the admins organisation
+- name: Add organisations inventory to the admins organisation
   awx.awx.tower_inventory:
     name: "{{ org_name }}"
-    description: "{{ org_name }} inventory"
+    description: "{{ org_name }} inventory, a blank inventory you can add hosts too!"
     organization: "{{ org_name }}"
     state: present
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes
 
-- name: Add AWX Server inventory to the admins organisation
+- name: Add Localhost inventory to the admins organisation
   awx.awx.tower_inventory:
-    name: "AWX Server"
-    description: "An inventory for the AWX Server itself."
+    name: "Localhost"
+    description: "An custom inventory for the AWX to dump it's backup to the host OS."
     organization: "{{ org_name }}"
     state: present
     variables:
@@ -41,20 +41,60 @@
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes
 
-- name: Add localhost to the AWX Server inventory
+- name: Add AWX Server inventory to the admins organisation
+  awx.awx.tower_inventory:
+    name: "AWX Server"
+    description: "{{ org_name }} inventory"
+    organization: "{{ org_name }}"
+    state: present
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes
+
+- name: Add organisations inventory to the admins organisation
+  awx.awx.tower_inventory:
+    name: "{{ org_name }}"
+    description: "{{ org_name }} inventory"
+    organization: "{{ org_name }}"
+    state: present
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes
+
+- name: Add AWX host to the AWX Server inventory
   awx.awx.tower_host:
-    name: "localhost"
-    description: "The AWX/Automation Controller server itself."
+    name: "{{ awx_url }}"
+    description: "The AWX Server, accessed at its URL."
     inventory: "AWX Server"
     state: present
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes
 
-- name: Allow admin account to administrate/use this inventory
+- name: Add localhost (ee) to the Localhost inventory
+  awx.awx.tower_host:
+    name: "localhost"
+    description: "The AWX Server, running as localhost."
+    inventory: "Localhost"
+    state: present
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes
+
+- name: Allow admin account to 'Use' the AWX Server inventory
   awx.awx.tower_role:
-    user: "admin"
-    inventory: "{{ org_name }}"
+    user: "{{ admin_username }}"
+    inventory: "AWX Server"
+    role: use
+    state: present
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes
+
+- name: Allow admin account to 'Use' the Localhost inventory
+  awx.awx.tower_role:
+    user: "{{ admin_username }}"
+    inventory: "Localhost"
     role: use
     state: present
     tower_host: "https://{{ awx_url }}"

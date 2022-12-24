@@ -1,0 +1,7 @@
+---
+
+- name: "Runs a borgmatic backup on the AWX host OS."
+  hosts: "{{ backup_server_ip }}"
+
+  roles:
+    - awx-backup

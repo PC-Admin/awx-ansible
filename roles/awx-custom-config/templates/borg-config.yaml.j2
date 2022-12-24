@@ -1,11 +1,7 @@
 location:
     source_directories:
-        - /
+        - /data/
     exclude_patterns:
-        - '- /var/log/borgbackup/'
-        - '- /var/lib/apt/lists/'
-        - '- /var/cache/'
-        - '- /var/tmp/'
         - '- /dev'
         - '- /proc'
         - '- /sys'
@@ -25,7 +21,8 @@ storage:
     checkpoint_interval: 600
 
 retention:
-    keep_daily: {{ backup_retention_days }}
+    keep_within: 24H
+    keep_daily: {{ backup_borg_retention_days }}
     prefix: '{hostname}-'
 
 consistency:

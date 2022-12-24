@@ -275,6 +275,7 @@
     grafana_url: "https://{{ grafana_url }}"
     grafana_user: "admin"
     grafana_password: "{{ grafana_admin_default_password }}"
+  ignore_errors: yes
 
 - name: Import Grafana dashboard Node Exporter
   community.grafana.grafana_dashboard:
@@ -301,6 +302,7 @@
     grafana_url: "https://{{ grafana_url }}"
     grafana_user: "admin"
     grafana_password: "{{ grafana_admin_default_password }}"
+  ignore_errors: yes
 
 - name: Import Grafana dashboard 'Kubernetes Cluster'
   community.grafana.grafana_dashboard:
@@ -310,6 +312,7 @@
     grafana_url: "https://{{ grafana_url }}"
     grafana_user: "admin"
     grafana_password: "{{ grafana_admin_default_password }}"
+  ignore_errors: yes
 
 # This doesn't set the admin password or get you past the initial interactive prompt :/
 #- name: Update admin Grafana users password

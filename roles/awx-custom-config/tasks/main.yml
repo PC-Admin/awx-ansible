@@ -12,6 +12,10 @@
 - import_tasks: "{{ role_path }}/tasks/users_org_inventory_awx.yml"
   tags: [ 'never', 'configure-awx' ]
 
+# AWX configure credentials
+- import_tasks: "{{ role_path }}/tasks/credentials_awx.yml"
+  tags: [ 'never', 'configure-awx' ]
+
 # AWX configure projects
 - import_tasks: "{{ role_path }}/tasks/projects_awx.yml"
   tags: [ 'never', 'configure-awx' ]

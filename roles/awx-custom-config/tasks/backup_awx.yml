@@ -1,14 +1,14 @@
 ---
 
-- name: Include AWX/Automation Controller master token from awx_tokens.yml
+- name: Include AWX master token from awx_tokens.yml
   delegate_to: localhost
   include_vars:
     file: /tmp/awx/tokens.yml
   no_log: True
 
-- name: Create a AWX/Automation Controller session token for executing AWX modules
+- name: Create a AWX session token for executing AWX modules
   awx.awx.tower_token:
-    description: 'AWX/Automation Controller Session Token'
+    description: 'AWX Session Token'
     scope: "write"
     state: present
     tower_host: "https://{{ awx_url }}"
@@ -30,6 +30,43 @@
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes
+
+#- name: Load public SSH key for connecting to borg user on AWX Server
+#  delegate_to: localhost
+#  slurp:
+#   src: "{{ awx_ssh_pubkey }}"
+#  register: slurped_pubkey
+
+#- name: Set authorized key taken from slurped data
+#  become: yes
+#  become_user: borg
+#  ansible.posix.authorized_key:
+#    user: borg
+#    state: present
+#    key: "{{ slurped_pubkey.content | b64decode }}"
+#    exclusive: true
+
+- name: Create borg users ~/.ssh if it does not exist
+  ansible.builtin.file:
+    path: /home/borg/.ssh/
+    state: directory
+    owner: borg
+    group: borg
+    mode: '0700'
+
+- name: Set variable for public key content
+  set_fact:
+    ssh_public_key: "{{ lookup('ansible.builtin.file','{{ awx_ssh_pubkey }}') }}"
+
+- name: Set authorized key taken from lookup data
+  ansible.builtin.lineinfile:
+    path: /home/borg/.ssh/authorized_keys
+    regexp: '^.*$'
+    line: "{{ ssh_public_key }}"
+    create: true
+    owner: borg
+    group: borg
+    mode: '0600'
 
 #https://github.com/kurokobo/awx-on-k3s/commit/364e9c19d0d02794e836260c1800b97415b5dde7
 
@@ -61,9 +98,9 @@
   command: |
       kubectl -n awx apply -f /root/awx-on-k3s-1.1.0/backup/pv.yaml
 
-- name: Customize pod specification for 'AWX Server' Container Instance Group
+- name: Customize pod specification for 'AWX Server (Custom Runner)' Container Instance Group
   awx.awx.instance_group:
-    name: "AWX Server"
+    name: "AWX Server (Custom Runner)"
     is_container_group: True
     pod_spec_override: |
       apiVersion: v1
@@ -88,44 +125,59 @@
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes
 
-- name: Create 'Backup AWX System' job template
+- name: Create 'Backup AWX [K3S Dump]' job template
   awx.awx.tower_job_template:
-    name: "Backup AWX System"
-    description: "Backs up the AWX/Ansible Controllers host system."
+    name: "Backup AWX [K3S Dump]"
+    description: "Backs up the AWX host system, dumping a snapshot of it to the local disk."
     job_type: run
-    inventory: "AWX Server"
+    inventory: "Localhost"
     project: "AWX on K3s"
     playbook: backup/ansible/project/backup.yml
-    instance_groups: ["AWX Server"]
+    instance_groups: ["AWX Server (Custom Runner)"]
     state: present
     verbosity: 1
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes
 
-- name: Collect timezone of AWX/Automation Controller server (Debian and derivatives only)
+- name: Collect timezone of AWX server (Debian and derivatives only)
   command: cat /etc/timezone
   register: timezone_output
 
-- name: Create an rrule string for scheduling 'Backup AWX System'
+- name: Create an rrule string for scheduling 'Backup AWX [K3S Dump]'
   set_fact:
     rrule_line_backup_awx: "DTSTART;TZID={{ timezone_output.stdout }}:{{ backup_awx_schedule_start }} RRULE:FREQ={{ backup_awx_schedule_frequency }};INTERVAL={{ backup_awx_schedule_interval }}"
 
-- name: Build a schedule for 'Backup AWX System' job template
+- name: Build a schedule for 'Backup AWX [K3S Dump]' job template
   awx.awx.tower_schedule:
-    name: "Backup AWX System"
+    name: "Backup AWX [K3S Dump]"
     enabled: yes
     state: present
-    unified_job_template: "Backup AWX System"
+    unified_job_template: "Backup AWX [K3S Dump]"
     #extra_data: "{{ lookup('file', '{{ role_path }}/extra-vars/update_all.json') }}"
     rrule: "{{ rrule_line_backup_awx }}"
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes
 
-- name: Delete the AWX/Automation Controller session token for executing modules
+- name: Create 'Backup AWX [Borgmatic]' job template
+  awx.awx.tower_job_template:
+    name: "Backup AWX [Borgmatic]"
+    description: "Backs up the AWX/Ansible Controllers host system."
+    job_type: run
+    inventory: "AWX Server"
+    project: "AWX on K3s"
+    playbook: '/projects/backup.yml'
+    job_tags: ['run-backup']
+    state: present
+    verbosity: 1
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes
+
+- name: Delete the AWX session token for executing modules
   awx.awx.tower_token:
-    description: 'AWX/Automation Controller Session Token'
+    description: 'AWX Session Token'
     scope: "write"
     state: absent
     existing_token_id: "{{ awx_session_token.ansible_facts.tower_token.id }}"
@@ -133,7 +185,7 @@
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes
 
-- name: Add prerequisite packages to backup server
+- name: Add prerequisite packages to Backup Server
   delegate_to: '{{ backup_server_ip }}'
   ansible.builtin.apt:
     pkg:
@@ -147,6 +199,7 @@
   ansible.builtin.apt:
     pkg:
     - borgmatic
+    - inotify-tools
   register: apt_status
   until: apt_status is success
   delay: 6
@@ -257,7 +310,16 @@
     owner: borg
     group: borg
 
-- name: Add environment variable for borg user
+- name: Add environment variable for borg user on AWX Server
+  ansible.builtin.lineinfile:
+    path: /home/borg/.profile
+    regexp: '^export BORG_PASSPHRASE=./*$'
+    line: "export BORG_PASSPHRASE={{ backup_passphrase }}"
+    owner: borg
+    group: borg
+    mode: '0600'
+
+- name: Add environment variable for borg user on Backup Server
   delegate_to: '{{ backup_server_ip }}'
   ansible.builtin.lineinfile:
     path: /home/borg/.profile
@@ -277,7 +339,7 @@
   args:
     creates: '{{ backup_directory }}nonce'
 
-- name: Ensure borgmatic config directory exists on AWX
+- name: Ensure borgmatic config directory exists on AWX Server
   ansible.builtin.file:
     path: '/home/borg/.config/borgmatic/'
     state: directory
@@ -285,17 +347,42 @@
     owner: borg
     group: borg
 
-- name: Save borgmatic config file, template
+- name: Save borgmatic config file on AWX Server
   template:
     src: '{{ role_path }}/templates/borg-config.yaml.j2'
     dest: '/home/borg/.config/borgmatic/config.yaml'
 
-- name: Delete the AWX/Automation Controller session token for executing modules
-  awx.awx.tower_token:
-    description: 'AWX/Automation Controller Session Token'
-    scope: "write"
-    state: absent
-    existing_token_id: "{{ awx_session_token.ansible_facts.tower_token.id }}"
-    tower_host: "https://{{ awx_url }}"
-    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: yes
+- name: Save the borg-trigger shell script on AWX
+  template:
+    src: '{{ role_path }}/templates/borg-trigger.sh.j2'
+    dest: '/home/borg/borg-trigger.sh'
+    mode: 0755
+    owner: borg
+    group: borg
+
+- name: Save borg-trigger service template on AWX Server
+  ansible.builtin.blockinfile:
+    path: /etc/systemd/system/borg-trigger.service
+    create: true
+    block: |
+      [Service]
+      ExecStart=/home/borg/borg-trigger.sh
+      ExecRestart=kill $(ps -fu borg | grep borg-trigger.sh | awk '{print $2}') && /home/borg/borg-trigger.sh
+      ExecStop=kill $(ps -fu borg | grep borg-trigger.sh | awk '{print $2}')
+      Restart=always
+      RestartSec=1
+      StandardOutput=syslog+console
+      StandardError=syslog+console
+      SyslogIdentifier=borg-trigger
+      User=borg
+      Group=borg
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Restart new borg-trigger service on Backup Server
+  ansible.builtin.systemd:
+    state: restarted
+    daemon-reload: true
+    name: borg-trigger
+    enabled: yes

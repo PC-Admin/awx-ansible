@@ -1,0 +1,6 @@
+---
+
+# AWX borg that data to the backup server.
+- import_tasks: "{{ role_path }}/tasks/run_backup.yml"
+  when: backup_enabled | bool
+  tags: [ 'never', 'run-backup' ]

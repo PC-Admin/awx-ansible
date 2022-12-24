@@ -1,0 +1,4 @@
+---
+
+- name: Run borgmatic command as borg user
+  command: runuser -u borg -- borgmatic --config /home/borg/.config/borgmatic/config.yaml

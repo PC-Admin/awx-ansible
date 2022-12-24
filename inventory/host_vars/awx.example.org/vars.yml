@@ -13,6 +13,10 @@ admin_password: << strong-password >> # AWX admin user password.
 secret_key: << strong-password >>     # AWX secrets password.
 pg_password: << strong-password >>    # AWX database password.
 
+awx_ssh_pubkey: '/home/user/.ssh/somekey_ed25519.pub'
+awx_ssh_key: '/home/user/.ssh/somekey_ed25519'
+awx_ssh_key_password: << strong-password >>
+
 # Deploy All Settings
 update_schedule_start: '20210101T000000'
 update_schedule_frequency: 'HOURLY'
@@ -31,6 +35,7 @@ backup_enabled: false
 backup_server_ip: 123.456.789.255           # IP of the backup server, be sure you can ssh to it
 backup_passphrase: << strong-password >>    # Borgbackup encryption passphrase
 backup_retention_days: 90                   # Borgbackup retention period
+backup_local_copies: 3                       # Number of local copies of the backup to store locally on the AWX Server
 backup_awx_schedule_start: '20200101T000000'  # Borgbackup Job Template Schedule
 backup_awx_schedule_frequency: 'HOURLY'
 backup_awx_schedule_interval: 1

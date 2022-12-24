@@ -1,4 +1,5 @@
 ---
+
 - name: "Setup for the AWX/Automation Controller system."
   hosts: "{{ 'awx_servers' }}"
   become: true
