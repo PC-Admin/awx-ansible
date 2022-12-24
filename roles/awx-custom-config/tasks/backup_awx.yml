@@ -44,7 +44,7 @@
 - name: Create borg user on AWX server
   ansible.builtin.user:
     name: borg
-    shell: /bin/bash
+    shell: /bin/rbash
     password: '!'
     generate_ssh_key: yes
     ssh_key_type: ed25519
@@ -370,7 +370,15 @@
 
 - name: Ensure borgmatic config directory exists on AWX Server
   ansible.builtin.file:
-    path: '/home/borg/.config/borgmatic/'
+    path: "/home/borg/.config/borgmatic/"
+    state: directory
+    mode: 0755
+    owner: borg
+    group: borg
+
+- name: Ensure ansible config directory exists on AWX Server
+  ansible.builtin.file:
+    path: "/home/borg/.ansible/"
     state: directory
     mode: 0755
     owner: borg
@@ -385,6 +393,7 @@
   template:
     src: '{{ role_path }}/templates/cleanup.sh.j2'
     dest: '/data/backup/cleanup.sh'
+    attributes: "+i"
     mode: 0554
     owner: root
     group: root
