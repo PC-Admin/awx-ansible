@@ -173,10 +173,10 @@
     description: "Backs up the AWX host system to the external Backup Server."
     job_type: run
     inventory: "AWX Server"
-    project: "Ansible Repository"
-    playbook: backup.yml
+    project: "AWX Ansible"
+    playbook: projects/backup.yml
     credentials: [ "AWX SSH Key", "Borgmatic SSH Password" ]
-    extra_vars: { awx_url: "{{ awx_url }}", BORG_PASSPHRASE: "{{ backup_passphrase }}" }
+    extra_vars: { awx_url: "{{ awx_url }}", BORG_PASSPHRASE: "{{ backup_passphrase }}", ansible_user: "borg" }
     state: present
     verbosity: 1
     tower_host: "https://{{ awx_url }}"
@@ -232,10 +232,10 @@
     description: "Lists the local dumps on the AWX server and the remote borgmatic history."
     job_type: run
     inventory: "AWX Server"
-    project: "Ansible Repository"
-    playbook: backups-list.yml
+    project: "AWX Ansible"
+    playbook: project/backups-list.yml
     credential: "AWX SSH Key"
-    extra_vars: { awx_url: "{{ awx_url }}", backup_server_ip: "{{ backup_server_ip }}", BORG_PASSPHRASE: "{{ backup_passphrase }}" }
+    extra_vars: { awx_url: "{{ awx_url }}", backup_server_ip: "{{ backup_server_ip }}", BORG_PASSPHRASE: "{{ backup_passphrase }}", ansible_user: "borg" }
     state: present
     verbosity: 1
     tower_host: "https://{{ awx_url }}"

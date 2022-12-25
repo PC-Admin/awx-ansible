@@ -1,8 +1,22 @@
 
-# Backup and recover AWX/Automation Controller
+# Backup and recover AWX
 
-## BACKUP MANUALLY WITH: https://github.com/kurokobo/awx-on-k3s/tree/main/backup/#back-up-awx-manually
 
+## Recover from local dump with Ansible.
+
+1) Collect the local tower-openshift-backup directory name, for example:
+
+"tower-openshift-backup-2022-12-24-11:43:33"
+
+2) Run the playbook with the recover-awx-local tag:
+
+`$ ansible-playbook -v -i ./inventory/hosts -e "awx_backup_directory='tower-openshift-backup-2022-12-24-11:43:33'" -t "recover-awx-local" setup.yml`
+
+
+## Backup manually with: https://github.com/kurokobo/awx-on-k3s/tree/main/backup/#back-up-awx-manually
+
+Example:
+```
 root@awx:~/awx-on-k3s-1.1.0# NAMESPACE=awx
 root@awx:~/awx-on-k3s-1.1.0# cd ./backup/ansible/
 root@awx:~/awx-on-k3s-1.1.0/backup/ansible# kubectl -n ${NAMESPACE} apply -f rbac/sa.yaml
@@ -38,5 +52,4 @@ ok: [localhost] => {
         "name": "awxbackup-2022-12-08-07-05-01"
     }
 }
-
-WORKS :)
+```

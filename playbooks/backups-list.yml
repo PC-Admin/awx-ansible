@@ -2,8 +2,6 @@
 
 - name: "Lists the Borgmatic backup history on the Backup Server."
   hosts: "{{ awx_url }}"
-  become: true
-  become_user: borg
   gather_facts: false
 
   tasks:

@@ -1,8 +1,8 @@
 ---
 
-- name: Add 'Ansible Repository' project to AWX admins organisation
+- name: Add 'AWX Ansible' project to AWX admins organisation
   awx.awx.tower_project:
-    name: "Ansible Repository"
+    name: "AWX Ansible"
     description: "An example playbook for this AWX setup."
     organization: "{{ org_name }}"
     scm_type: git
@@ -15,9 +15,9 @@
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes
 
-- name: Update 'Ansible Repository' project
+- name: Update 'AWX Ansible' project
   awx.awx.tower_project_update:
-    name: "Ansible Repository"
+    name: "AWX Ansible"
     timeout: 300
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
