@@ -75,28 +75,6 @@
 #  command: /usr/bin/docker stop grafana
 #  ignore_errors: True
 
-#- name: Remove grafana in Docker
-#  delegate_to: '{{ backup_server_ip }}'
-#  command: /usr/bin/docker rm grafana 
-#  ignore_errors: True
-
-#- name: Run grafana in Docker
-#  delegate_to: '{{ backup_server_ip }}'
-#  command: /usr/bin/docker run -d --name=grafana -p 3000:3000 grafana/grafana
-
-#- name: Ensure grafana image is pulled
-#  delegate_to: '{{ backup_server_ip }}'
-#  docker_image:
-#    name: grafana/grafana
-#    source: "pull"
-#    state: present
-#    pull:
-#      platform: amd64
-#  register: result
-#  retries: 6
-#  delay: 10
-#  until: result is not failed
-
 - name: Ensure grafana image is pulled
   delegate_to: '{{ backup_server_ip }}'
   command: docker pull grafana/grafana 

@@ -1,0 +1,11 @@
+---
+
+# Deploy a Prometheus/Graphana monitor on the backup server to monitor AWX
+- import_tasks: "{{ role_path }}/tasks/setup_monitor.yml"
+  when: monitor_enabled | bool
+  tags: [ 'never', 'setup-monitor' ]
+
+# Configure Graphana monitor remotely with its API
+- import_tasks: "{{ role_path }}/tasks/configure_grafana.yml"
+  when: monitor_enabled | bool
+  tags: [ 'never', 'setup-monitor' ]

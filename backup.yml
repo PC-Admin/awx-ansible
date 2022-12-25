@@ -2,8 +2,6 @@
 
 - name: "Runs a borgmatic backup on the AWX host OS."
   hosts: "{{ awx_url }}"
-  become: true
-  become_user: borg
   gather_facts: false
 
   tasks:

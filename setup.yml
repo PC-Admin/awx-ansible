@@ -7,3 +7,5 @@
   roles:
     - awx-install
     - awx-custom-config
+    - awx-backup
+    - awx-monitor

@@ -1,0 +1,114 @@
+---
+
+- name: Include AWX master token from awx_tokens.yml
+  delegate_to: localhost
+  include_vars:
+    file: /tmp/awx/tokens.yml
+  no_log: True
+
+- name: Create a AWX session token for executing AWX modules
+  awx.awx.tower_token:
+    description: 'AWX Session Token'
+    scope: "write"
+    state: present
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ master_token }}"
+    validate_certs: yes
+  register: awx_session_token
+
+- name: Add 'AWX on K3s' project to AWX admins organisation
+  awx.awx.tower_project:
+    name: "AWX on K3s"
+    description: "AWX on K3s repository."
+    organization: "{{ org_name }}"
+    scm_type: git
+    scm_url: "https://github.com/kurokobo/awx-on-k3s.git"
+    scm_branch: "1.1.1"
+    scm_delete_on_update: yes
+    scm_update_on_launch: yes
+    state: present
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes
+
+#https://github.com/kurokobo/awx-on-k3s/commit/364e9c19d0d02794e836260c1800b97415b5dde7
+
+- name: Update 'AWX on K3s' project
+  awx.awx.tower_project_update:
+    name: "AWX on K3s"
+    timeout: 300
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes
+
+- name: Ensure /data/projects/ directory exists
+  ansible.builtin.file:
+    path: '/data/backup/'
+    state: directory
+    mode: 0755
+    owner: root
+    group: root
+
+- name: Prepare Service Account and API Token
+  command: |
+      kubectl -n awx apply -f /root/awx-on-k3s-1.1.0/backup/ansible/rbac/sa.yaml
+
+- name: Prepare awx-backup-claim PersistentVolumeClaim
+  command: |
+      kubectl -n awx apply -f /root/awx-on-k3s-1.1.0/backup/pvc.yaml
+
+- name: Prepare awx-backup-volume PersistentVolume
+  command: |
+      kubectl -n awx apply -f /root/awx-on-k3s-1.1.0/backup/pv.yaml
+
+- name: Customize pod specification for 'AWX Server (Custom Runner)' Container Instance Group
+  awx.awx.instance_group:
+    name: "AWX Server (Custom Runner)"
+    is_container_group: True
+    pod_spec_override: |
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        namespace: awx
+      spec:
+        serviceAccountName: awx-backup
+        automountServiceAccountToken: true
+        containers:
+          - image: quay.io/ansible/awx-ee:latest
+            name: worker
+            args:
+              - ansible-runner
+              - worker
+              - '--private-data-dir=/runner'
+            resources:
+              requests:
+                cpu: 250m
+                memory: 100Mi
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes
+
+- name: Create 'Backup AWX [Local Dump]' job template
+  awx.awx.tower_job_template:
+    name: "Backup AWX [Local Dump]"
+    description: "Backs up the AWX host system, dumping a snapshot of it to the local disk."
+    job_type: run
+    inventory: "Localhost"
+    project: "AWX on K3s"
+    playbook: backup/ansible/project/backup.yml
+    instance_groups: ["AWX Server (Custom Runner)"]
+    state: present
+    verbosity: 1
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes
+
+- name: Delete the AWX session token for executing modules
+  awx.awx.tower_token:
+    description: 'AWX Session Token'
+    scope: "write"
+    state: absent
+    existing_token_id: "{{ awx_session_token.ansible_facts.tower_token.id }}"
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes

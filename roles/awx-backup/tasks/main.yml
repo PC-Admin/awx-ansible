@@ -1,0 +1,10 @@
+---
+
+# AWX configure 'Backup AWX [Local Dump]' job template to perform the initial dump of AWX.
+- import_tasks: "{{ role_path }}/tasks/local_backup.yml"
+  tags: [ 'never', 'setup-backup' ]
+
+# AWX configure borgmatic transfer to the backup server.
+- import_tasks: "{{ role_path }}/tasks/borg_backup.yml"
+  when: backup_enabled | bool
+  tags: [ 'never', 'setup-backup' ]

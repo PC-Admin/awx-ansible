@@ -26,30 +26,15 @@
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes
 
-- name: Add 'AWX on K3s' project to AWX admins organisation
-  awx.awx.tower_project:
-    name: "AWX on K3s"
-    description: "AWX on K3s repository."
-    organization: "{{ org_name }}"
-    scm_type: git
-    scm_url: "https://github.com/kurokobo/awx-on-k3s.git"
-    scm_branch: "1.1.1"
-    scm_delete_on_update: yes
-    scm_update_on_launch: yes
-    state: present
-    tower_host: "https://{{ awx_url }}"
-    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: yes
-
 - name: Create borg user on AWX server
   ansible.builtin.user:
     name: borg
-    #shell: /bin/bash
-    shell: /bin/rbash
+    shell: /bin/bash
+    #shell: /bin/rbash
     password: '!'
-    generate_ssh_key: yes
-    ssh_key_type: ed25519
-    ssh_key_file: .ssh/borgmatic
+    #generate_ssh_key: yes
+    #ssh_key_type: ed25519
+    #ssh_key_file: .ssh/borgmatic
 
 - name: Create borg users ~/.ssh if it does not exist
   ansible.builtin.file:
@@ -67,15 +52,105 @@
     group: borg
     mode: '0755'
 
-- name: Set variable for public key content
-  set_fact:
-    ssh_public_key: "{{ lookup('ansible.builtin.file','{{ awx_ssh_pubkey }}') }}"
+#awx_ssh_pubkey: '/home/michael/.ssh/matrixtesting6_ed25519.pub'
+#awx_ssh_key: '/home/michael/.ssh/matrixtesting6_ed25519'
+#awx_ssh_key_password: 'lwOQHst0tfPPzJJtzAFD'
+
+# generate a strong password
+
+#- name: Generate a Borgmatic SSH key password with openssl
+#  command: |
+#      openssl rand -base64 32
+#  register: ssh_password
+
+
+# generate key pair at .ssh/borgmatic
+
+- name: Generate or regenerate a Borgmatic SSH e25519 keypair
+  community.crypto.openssh_keypair:
+    comment: "Borgmatic AWX Server  > Backup Server."
+    path: /home/borg/.ssh/borgmatic
+    type: "ed25519"
+    regenerate: always
+    owner: borg
+    group: borg
+    mode: '0600'
+
+- name: Generate or regenerate a borg_user SSH e25519 keypair
+  community.crypto.openssh_keypair:
+    comment: "'borg' user on AWX & Backup servers."
+    path: /home/borg/.ssh/borg_user
+    type: "ed25519"
+    regenerate: always
+    owner: borg
+    group: borg
+    mode: '0600'
+
+#- name: Remove the existing Borgmatix SSH keypair
+#  command: |
+#      rm /home/borg/.ssh/borgmatic /home/borg/.ssh/borgmatic.pub
+#  ignore_errors: true
+
+#- name: Generate a Borgmatic SSH keypair
+#  command: |
+#      ssh-keygen -t ed25519 -f /home/borg/.ssh/borgmatic -q -C "'borg@{{ awx_url }} Generated: {{ ansible_date_time.date }}-{{ ansible_date_time.time }}'"
+
+# save password as AWX credential
+
+- name: Create a Vault credential for Borgmatic Password
+  awx.awx.credential:
+    name: Borgmatic Password
+    credential_type: Vault
+    organization: "{{ org_name }}"
+    inputs:
+      vault_password: "{{ backup_passphrase }}"
+      vault_id: "awx_borg_password"
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes
+
+- name: Slurp up new borg_user private key
+  ansible.builtin.slurp:
+    src: /home/borg/.ssh/borg_user
+  register: borg_user_ssh_private_key
+
+- name: Add/Update machine credential
+  awx.awx.credential:
+    name: "AWX SSH Key"
+    description: "The SSH key for AWX to connect to its own host OS as the borg user. Also the SSH key it uses to do the borgmatic backup."
+    organization: "{{ org_name }}"
+    credential_type: Machine
+    state: present
+    inputs:
+      ssh_key_data: "{{ borg_user_ssh_private_key['content'] | b64decode }}"
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes
+
+- name: Delete private borg_user SSH e25519 key
+  ansible.builtin.file:
+    state: absent
+    path: /home/borg/.ssh/borg_user
+
+# include in job templates
+
+
+
+#- name: Set variable for public key content
+#  set_fact:
+#    ssh_public_key: "{{ lookup('ansible.builtin.file','{{ awx_ssh_pubkey }}') }}"
+
+
+- name: Slurp up new borg_user.pub key
+  ansible.builtin.slurp:
+    src: /home/borg/.ssh/borg_user.pub
+  register: borg_user_ssh_public_key
 
 - name: Set authorized key to allow this public key on the AWX Server
   ansible.builtin.lineinfile:
     path: /home/borg/.ssh/authorized_keys
-    regexp: '^.*$'
-    line: "{{ ssh_public_key }}"
+    #regexp: '^.*$'
+    line: "{{ borg_user_ssh_public_key['content'] | b64decode }}"
     create: true
     owner: borg
     group: borg
@@ -85,84 +160,12 @@
   delegate_to: '{{ backup_server_ip }}'
   ansible.builtin.lineinfile:
     path: /home/borg/.ssh/authorized_keys
-    regexp: '^{{ ssh_public_key }}$'
-    line: "{{ ssh_public_key }}"
+    #regexp: '^.*$'
+    line: "{{ borg_user_ssh_public_key['content'] | b64decode }}"
     create: true
     owner: borg
     group: borg
     mode: '0600'
-
-#https://github.com/kurokobo/awx-on-k3s/commit/364e9c19d0d02794e836260c1800b97415b5dde7
-
-- name: Update 'AWX on K3s' project
-  awx.awx.tower_project_update:
-    name: "AWX on K3s"
-    timeout: 300
-    tower_host: "https://{{ awx_url }}"
-    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: yes
-
-- name: Ensure /data/projects/ directory exists
-  ansible.builtin.file:
-    path: '/data/backup/'
-    state: directory
-    mode: 0755
-    owner: root
-    group: root
-
-- name: Prepare Service Account and API Token
-  command: |
-      kubectl -n awx apply -f /root/awx-on-k3s-1.1.0/backup/ansible/rbac/sa.yaml
-
-- name: Prepare awx-backup-claim PersistentVolumeClaim
-  command: |
-      kubectl -n awx apply -f /root/awx-on-k3s-1.1.0/backup/pvc.yaml
-
-- name: Prepare awx-backup-volume PersistentVolume
-  command: |
-      kubectl -n awx apply -f /root/awx-on-k3s-1.1.0/backup/pv.yaml
-
-- name: Customize pod specification for 'AWX Server (Custom Runner)' Container Instance Group
-  awx.awx.instance_group:
-    name: "AWX Server (Custom Runner)"
-    is_container_group: True
-    pod_spec_override: |
-      apiVersion: v1
-      kind: Pod
-      metadata:
-        namespace: awx
-      spec:
-        serviceAccountName: awx-backup
-        automountServiceAccountToken: true
-        containers:
-          - image: quay.io/ansible/awx-ee:latest
-            name: worker
-            args:
-              - ansible-runner
-              - worker
-              - '--private-data-dir=/runner'
-            resources:
-              requests:
-                cpu: 250m
-                memory: 100Mi
-    tower_host: "https://{{ awx_url }}"
-    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: yes
-
-- name: Create 'Backup AWX [Local Dump]' job template
-  awx.awx.tower_job_template:
-    name: "Backup AWX [Local Dump]"
-    description: "Backs up the AWX host system, dumping a snapshot of it to the local disk."
-    job_type: run
-    inventory: "Localhost"
-    project: "AWX on K3s"
-    playbook: backup/ansible/project/backup.yml
-    instance_groups: ["AWX Server (Custom Runner)"]
-    state: present
-    verbosity: 1
-    tower_host: "https://{{ awx_url }}"
-    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: yes
 
 - name: Create 'Backup AWX [Borgmatic]' job template
   awx.awx.tower_job_template:
@@ -172,7 +175,7 @@
     inventory: "AWX Server"
     project: "Ansible Repository"
     playbook: backup.yml
-    credential: "AWX SSH Key"
+    credentials: [ "AWX SSH Key", "Borgmatic SSH Password" ]
     extra_vars: { awx_url: "{{ awx_url }}", BORG_PASSPHRASE: "{{ backup_passphrase }}" }
     state: present
     verbosity: 1
@@ -277,22 +280,6 @@
     owner: root
     group: root
 
-- name: Create borg user on backup server
-  delegate_to: '{{ backup_server_ip }}'
-  ansible.builtin.user:
-    name: borg
-    shell: /bin/bash
-    password: '!'
-
-- name: Collect public SSH key to variable
-  ansible.builtin.slurp:
-    src: /home/borg/.ssh/borgmatic.pub
-  register: borgmatic_public_key
-
-- name: Print public SSH key
-  ansible.builtin.debug:
-    msg: "{{ borgmatic_public_key['content'] | b64decode }}"
-
 - name: Ensure root users ~/.ssh/ folder exists on backup server
   delegate_to: '{{ backup_server_ip }}'
   ansible.builtin.file:
@@ -302,13 +289,18 @@
     owner: borg
     group: borg
 
-- name: Write public SSH key to authorized_keys of backup server'
+- name: Slurp up new borgmatric.pub key
+  ansible.builtin.slurp:
+    src: /home/borg/.ssh/borgmatic.pub
+  register: borgmatic_ssh_public_key
+
+- name: Write public SSH key to authorized_keys of backup server
   delegate_to: '{{ backup_server_ip }}'
   ansible.builtin.lineinfile:
     path: /home/borg/.ssh/authorized_keys
     regexp: '^command="borg serve --restrict-to-path {{ backup_directory }}",restrict.*$'
     line: |
-        command="borg serve --restrict-to-path {{ backup_directory }}",restrict {{ borgmatic_public_key['content'] | b64decode }}
+        command="borg serve --restrict-to-path {{ backup_directory }}",restrict {{ borgmatic_ssh_public_key['content'] | b64decode }}
     owner: borg
     group: borg
     mode: '0600'
@@ -336,6 +328,9 @@
   become_user: borg
   ansible.builtin.command: |
       ssh -o "StrictHostKeyChecking no" {{ backup_server_ip }} exit
+  #environment:
+  #  SSH_ASKPASS: 'rbash /tmp/cough.sh'
+  #ignore_errors: true
 
 - name: Install Borgmatic on AWX
   ansible.builtin.apt:
@@ -365,26 +360,26 @@
     owner: borg
     group: borg
 
-- name: Add environment variable for borg user on AWX Server
-  ansible.builtin.lineinfile:
-    path: /home/borg/.profile
-    regexp: '^export BORG_PASSPHRASE=./*$'
-    line: "export BORG_PASSPHRASE={{ backup_passphrase }}"
-    create: yes
-    owner: borg
-    group: borg
-    mode: '0600'
+#- name: Add environment variable for borg user on AWX Server
+#  ansible.builtin.lineinfile:
+#    path: /home/borg/.profile
+#    regexp: '^export BORG_PASSPHRASE=./*$'
+#    line: "export BORG_PASSPHRASE={{ backup_passphrase }}"
+#    create: yes
+#    owner: borg
+#    group: borg
+#    mode: '0600'
 
-- name: Add environment variable for borg user on Backup Server
-  delegate_to: '{{ backup_server_ip }}'
-  ansible.builtin.lineinfile:
-    path: /home/borg/.profile
-    regexp: '^export BORG_PASSPHRASE=./*$'
-    line: "export BORG_PASSPHRASE={{ backup_passphrase }}"
-    create: yes
-    owner: borg
-    group: borg
-    mode: '0600'
+#- name: Add environment variable for borg user on Backup Server
+#  delegate_to: '{{ backup_server_ip }}'
+#  ansible.builtin.lineinfile:
+#    path: /home/borg/.profile
+#    regexp: '^export BORG_PASSPHRASE=./*$'
+#    line: "export BORG_PASSPHRASE={{ backup_passphrase }}"
+#    create: yes
+#    owner: borg
+#    group: borg
+#    mode: '0600'
 
 - name: Perform borg init on backup server
   delegate_to: '{{ backup_server_ip }}'
@@ -434,11 +429,3 @@
     mode: 0554
     owner: borg
     group: borg
-
-- name: Allow borg user to run the cleanup.sh script as root
-  lineinfile:
-    dest: /etc/sudoers
-    state: present
-    insertafter: "# User privilege specification"
-    line: "borg ALL=(root) NOPASSWD: /data/backup/cleanup.sh"
-    validate: visudo -cf %s

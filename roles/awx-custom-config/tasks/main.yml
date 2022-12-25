@@ -27,13 +27,3 @@
 # AWX configure job schedules
 - import_tasks: "{{ role_path }}/tasks/schedules_awx.yml"
   tags: [ 'never', 'configure-awx' ]
-
-# AWX configure 'Backup AWX System' job template to perform the initial dump of AWX, then borg that data to the backup server.
-- import_tasks: "{{ role_path }}/tasks/backup_awx.yml"
-  when: backup_enabled | bool
-  tags: [ 'never', 'setup-backup' ]
-
-# Configure Prometheus/Graphana monitor on the backup server to monitor AWX
-- import_tasks: "{{ role_path }}/tasks/monitor_awx.yml"
-  when: monitor_enabled | bool
-  tags: [ 'never', 'setup-monitor' ]
