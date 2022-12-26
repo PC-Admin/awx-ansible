@@ -1,21 +1,21 @@
 ---
 
 - name: Add UFW to AWX Server
-  ansible.builtin.apt:
+  ansible.builtin.package:
     pkg:
     - ufw
-  register: apt_status
-  until: apt_status is success
+  register: package_status
+  until: package_status is success
   delay: 6
   retries: 10
 
 - name: Add UFW to Backup Server
   delegate_to: '{{ backup_server_ip }}'
-  apt:
+  ansible.builtin.package:
     pkg:
     - ufw
-  register: apt_status
-  until: apt_status is success
+  register: package_status
+  until: package_status is success
   delay: 6
   retries: 10
   when: ( monitor_enabled | bool ) or ( backup_enabled | bool )

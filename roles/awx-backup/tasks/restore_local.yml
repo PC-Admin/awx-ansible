@@ -33,7 +33,7 @@
       kubectl apply -f /root/awx-on-k3s-1.1.0/restore/pvc.yaml
 
 - name: Modify the name of the AWXRestore object in restore/awxrestore.yaml.
-  template:
+  ansible.builtin.template:
     src: '{{ role_path }}/templates/awxrestore.yaml.j2'
     dest: '/root/awx-on-k3s-1.1.0/restore/awxrestore.yaml'
 
@@ -42,13 +42,13 @@
       kubectl apply -f /root/awx-on-k3s-1.1.0/restore/awxrestore.yaml
 
 - name: Check if AWX restore completed (max 5min)
-  command: |
+  ansible.builtin.command: |
       kubectl -n awx logs --tail=10 -f deployments/awx-operator-controller-manager
   register: result
   until: result.stdout.find("failed=0") != -1
   failed_when: result.stdout.find("failed=1") != -1
-  retries: 2
+  retries: 20
   delay: 15
 
 - name: This will create AWXRestore object in the namespace, and now your AWX is restored.
-  command: kubectl -n awx get awxrestore
+  ansible.builtin.command: kubectl -n awx get awxrestore

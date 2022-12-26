@@ -1,4 +1,9 @@
 
+## AWX Ansible v0.0.6 [2022-12-25]
+
+- Refined the grafana monitor. 
+- Configured a workflow template powered backup for AWX. Where one job template causes a local dump, while the next template triggers a borgmatic backup from AWX to the backup server.
+
 ## AWX Ansible v0.0.5 [2022-12-20]
 
 - Fix AWX token generation. [done]

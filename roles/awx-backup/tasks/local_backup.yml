@@ -50,15 +50,15 @@
     group: root
 
 - name: Prepare Service Account and API Token
-  command: |
+  ansible.builtin.command: |
       kubectl -n awx apply -f /root/awx-on-k3s-1.1.0/backup/ansible/rbac/sa.yaml
 
 - name: Prepare awx-backup-claim PersistentVolumeClaim
-  command: |
+  ansible.builtin.command: |
       kubectl -n awx apply -f /root/awx-on-k3s-1.1.0/backup/pvc.yaml
 
 - name: Prepare awx-backup-volume PersistentVolume
-  command: |
+  ansible.builtin.command: |
       kubectl -n awx apply -f /root/awx-on-k3s-1.1.0/backup/pv.yaml
 
 - name: Customize pod specification for 'AWX Server (Custom Runner)' Container Instance Group

@@ -1,12 +1,12 @@
 ---
 
 - name: Install Prometheus Node Exporter on the AWX Server
-  ansible.builtin.apt:
+  ansible.builtin.package:
     pkg:
     - prometheus
     - prometheus-node-exporter
-  register: apt_status
-  until: apt_status is success
+  register: package_status
+  until: package_status is success
   delay: 6
   retries: 10
 
@@ -24,26 +24,26 @@
 
 - name: Install the Grafana prerequisites on Backup Server
   delegate_to: '{{ backup_server_ip }}'
-  ansible.builtin.apt:
+  ansible.builtin.package:
     pkg:
     - docker.io
     - apache2
     - apt-transport-https
     - certbot
     - python3-certbot-apache
-  register: apt_status
-  until: apt_status is success
+  register: package_status
+  until: package_status is success
   delay: 6
   retries: 10
 
 - name: Install Prometheus Node Exporter on the Backup Server
   delegate_to: '{{ backup_server_ip }}'
-  ansible.builtin.apt:
+  ansible.builtin.package:
     pkg:
     - prometheus
     - prometheus-node-exporter
-  register: apt_status
-  until: apt_status is success
+  register: package_status
+  until: package_status is success
   delay: 6
   retries: 10
 
@@ -63,10 +63,10 @@
 
 - name: Update repos on the Backup Server
   delegate_to: '{{ backup_server_ip }}'
-  apt:
+  ansible.builtin.package:
     update_cache: yes
-  register: apt_status
-  until: apt_status is success
+  register: package_status
+  until: package_status is success
   delay: 6
   retries: 10
 
@@ -199,108 +199,3 @@
 - name: Pause for 15 seconds so Grafana can warm up
   pause:
     seconds: 15
-
-- name: Create local Prometheus datasource
-  community.grafana.grafana_datasource:
-    name: "{{ grafana_url }}"
-    access: proxy
-    ds_type: prometheus
-    ds_url: 'http://{{ backup_server_ip }}:9090'
-    url: "https://{{ grafana_url }}"
-    grafana_user: "admin"
-    grafana_password: "{{ grafana_admin_default_password }}"
-
-#- name: Create local Node Exporter datasource
-#  community.grafana.grafana_datasource:
-#    name: local_node_exporter
-#    access: proxy
-#    ds_type: prometheus
-#    ds_url: 'http://{{ backup_server_ip }}:9100'
-#    url: "https://{{ grafana_url }}"
-#    grafana_user: "admin"
-#    grafana_password: "{{ grafana_admin_default_password }}"
-
-- name: Collect AWX Servers public IP
-  set_fact:
-    awx_public_ip: "{{ ansible_eth0.ipv4.address }}"
-
-- name: Create AWX Prometheus datasource
-  community.grafana.grafana_datasource:
-    name: "{{ awx_url }}"
-    access: proxy
-    ds_type: prometheus
-    is_default: true
-    ds_url: 'http://{{ awx_public_ip }}:9090'
-    grafana_url: "https://{{ grafana_url }}"
-    grafana_user: "admin"
-    grafana_password: "{{ grafana_admin_default_password }}"
-
-#- name: Create AWX Node Exporter datasource
-#  community.grafana.grafana_datasource:
-#    name: awx_node_exporter
-#    access: proxy
-#    ds_type: prometheus
-#    ds_url: 'http://{{ awx_public_ip }}:9100'
-#    grafana_url: "https://{{ grafana_url }}"
-#    grafana_user: "admin"
-#    grafana_password: "{{ grafana_admin_default_password }}"
-
-- name: Import Grafana dashboard 'Prometheus 2.0 Overview'
-  community.grafana.grafana_dashboard:
-    folder: General
-    dashboard_url: https://grafana.com/api/dashboards/3662/revisions/2/download
-    state: present
-    grafana_url: "https://{{ grafana_url }}"
-    grafana_user: "admin"
-    grafana_password: "{{ grafana_admin_default_password }}"
-  ignore_errors: yes
-
-- name: Import Grafana dashboard Node Exporter
-  community.grafana.grafana_dashboard:
-    folder: General
-    dashboard_url: https://grafana.com/api/dashboards/1860/revisions/29/download
-    state: present
-    grafana_url: "https://{{ grafana_url }}"
-    grafana_user: "admin"
-    grafana_password: "{{ grafana_admin_default_password }}"
-
-- name: Create a Grafana folder called 'K3S'
-  community.grafana.grafana_folder:
-    title: "K3S"
-    state: present
-    grafana_url: "https://{{ grafana_url }}"
-    grafana_user: "admin"
-    grafana_password: "{{ grafana_admin_default_password }}"
-
-- name: Import Grafana dashboard K3S cluster monitoring
-  community.grafana.grafana_dashboard:
-    folder: K3S
-    dashboard_url: https://grafana.com/api/dashboards/15282/revisions/1/download
-    state: present
-    grafana_url: "https://{{ grafana_url }}"
-    grafana_user: "admin"
-    grafana_password: "{{ grafana_admin_default_password }}"
-  ignore_errors: yes
-
-- name: Import Grafana dashboard 'Kubernetes Cluster'
-  community.grafana.grafana_dashboard:
-    folder: K3S
-    dashboard_url: https://grafana.com/api/dashboards/7249/revisions/1/download
-    state: present
-    grafana_url: "https://{{ grafana_url }}"
-    grafana_user: "admin"
-    grafana_password: "{{ grafana_admin_default_password }}"
-  ignore_errors: yes
-
-# This doesn't set the admin password or get you past the initial interactive prompt :/
-#- name: Update admin Grafana users password
-#  community.grafana.grafana_user:
-#    name: "{{ org_name }} Administrator"
-#    email: "{{ grafana_email }}"
-#    login: admin
-#    password: "{{ grafana_admin_new_password }}"
-#    is_admin: true
-#    state: present
-#    url: "https://{{ grafana_url }}"
-#    grafana_user: "admin"
-#    grafana_password: "{{ grafana_admin_default_password }}"

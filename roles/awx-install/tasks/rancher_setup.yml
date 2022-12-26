@@ -1,12 +1,12 @@
 ---
 
 - name: Ensure snap/snapd installed
-  ansible.builtin.apt:
+  ansible.builtin.package:
     pkg:
     - snap
     - snapd
-  register: apt_status
-  until: apt_status is success
+  register: package_status
+  until: package_status is success
   delay: 6
   retries: 10
 
