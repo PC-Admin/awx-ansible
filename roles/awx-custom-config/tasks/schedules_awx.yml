@@ -4,16 +4,16 @@
   command: cat /etc/timezone
   register: timezone_output
 
-- name: Create an rrule string for the 'Deploy All Servers'
+- name: Create an rrule string for the 'Deploy an AWX Server'
   set_fact:
     rrule_line_update: "DTSTART;TZID={{ timezone_output.stdout }}:{{ update_schedule_start }} RRULE:FREQ={{ update_schedule_frequency }};INTERVAL={{ update_schedule_interval }}"
 
-- name: Build a schedule for 'Deploy a Server' job template
+- name: Build a schedule for 'Deploy an AWX Server' job template
   awx.awx.tower_schedule:
-    name: "Deploy a Server"
+    name: "Deploy AWX Server"
     enabled: yes
     state: present
-    unified_job_template: "Deploy a Server"
+    unified_job_template: "Deploy an AWX Server"
     extra_data: "{{ lookup('file', '{{ role_path }}/extra-vars/update_all.json') }}"
     rrule: "{{ rrule_line_update }}"
     tower_host: "https://{{ awx_url }}"

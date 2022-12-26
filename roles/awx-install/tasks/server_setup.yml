@@ -1,11 +1,11 @@
 ---
 
 - name: Set server hostname to AWX / Ansible Controller URL
-  command: |
+  ansible.builtin.command: |
     hostnamectl set-hostname {{ awx_url }}
 
 - name: Update repos
-  apt:
+  ansible.builtin.apt:
     update_cache: yes
   register: apt_status
   until: apt_status is success
@@ -13,7 +13,7 @@
   retries: 10
 
 - name: Upgrade all packages
-  apt:
+  ansible.builtin.apt:
     name: "*"
     state: latest
   register: apt_status
@@ -22,7 +22,7 @@
   retries: 10
 
 - name: Add prerequisite packages
-  apt:
+  ansible.builtin.apt:
     pkg:
     - apt-transport-https
     - ca-certificates

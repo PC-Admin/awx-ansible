@@ -1,12 +1,17 @@
 ---
 
-- name: Ensure snapd is installed
-  package:
-    name: snapd
-    state: present
+- name: Ensure snap/snapd installed
+  ansible.builtin.apt:
+    pkg:
+    - snap
+    - snapd
+  register: apt_status
+  until: apt_status is success
+  delay: 6
+  retries: 10
 
 - name: Install Helm snap
-  snap:
+  community.general.snap:
     name: helm
     classic: yes
 
@@ -18,22 +23,22 @@
     mode: '0600'
 
 - name: Create the namespace cattle-system
-  shell: |
+  ansible.builtin.shell: |
       kubectl create namespace cattle-system --dry-run=client -o yaml | kubectl apply -f -
 
 - name: Add the helm repo
-  command: |
+  ansible.builtin.command: |
       /snap/bin/helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
 
 # helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
 # helm repo add rancher-alpha https://releases.rancher.com/server-charts/alpha
       
 - name: Run a helm repo update
-  command: |
+  ansible.builtin.command: |
       /snap/bin/helm repo update
 
 - name: Deploy the stable Rancher
-  shell: |
+  ansible.builtin.shell: |
       /snap/bin/helm install rancher rancher-stable/rancher \
         --namespace cattle-system \
         --set hostname={{ rancher_url }} \

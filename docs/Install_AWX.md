@@ -6,9 +6,9 @@ How to install this AWX setup.
 
 ## Provision the Servers
 
-Provision a Debian 11 or Ubuntu 22.04 server with >=8GB RAM and a public IP, then setup SSH access to the root account, this will be our AWX server.
+Provision a Debian 11 or Ubuntu 22.04 server with >=8GB RAM, disabled swap and a public IP, then setup SSH access to root@{{ awx_url }} account, this will be our AWX server.
 
-If you plan on using a backup/monitor server (recommended), provision a Debian 11 or Ubuntu 22.04 server with >=4GB RAM and setup SSH access to the root account.
+If you plan on using a backup/monitor server (recommended), provision a Debian 11 or Ubuntu 22.04 server with >=4GB RAM and setup SSH access to root@IP.
 
 
 ## Setup DNS Entries for it

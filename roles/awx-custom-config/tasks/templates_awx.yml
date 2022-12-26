@@ -1,12 +1,12 @@
 ---
 
-- name: Create 'Deploy a Server' job template
+- name: Create 'Deploy AWX Server' job template
   awx.awx.tower_job_template:
-    name: "Deploy a Server"
-    description: "Checks for updates, then applies those upgrades to a server connected to AWX."
+    name: "Deploy an AWX Server"
+    description: "Creates another AWX server with your existing AWX server."
     job_type: run
     inventory: "{{ org_name }}"
-    project: "Ansible Repository"
+    project: "AWX Ansible"
     playbook: setup.yml
     ask_extra_vars: yes
     survey_enabled: true

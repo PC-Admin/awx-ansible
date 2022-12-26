@@ -1,7 +1,7 @@
 ---
 
 - name: Add UFW to AWX Server
-  apt:
+  ansible.builtin.apt:
     pkg:
     - ufw
   register: apt_status

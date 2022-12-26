@@ -1,15 +1,15 @@
 ---
 
 - name: Add snap/snapd package
-  apt:
+  ansible.builtin.apt:
     pkg:
     - snap
+    - snapd
   register: apt_status
   until: apt_status is success
   delay: 6
   retries: 10
 
-- name: Install K9s, a kubernetes inspection tool
+- name: Add k9s snap for Ubuntu 22.04 or Debian 11
   community.general.snap:
-    name:
-      - k9s
+    name: k9s

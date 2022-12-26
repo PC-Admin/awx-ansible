@@ -29,12 +29,16 @@
 - name: Create borg user on AWX server
   ansible.builtin.user:
     name: borg
-    shell: /bin/bash
-    #shell: /bin/rbash
+    #shell: /bin/bash
+    shell: /bin/rbash
     password: '!'
-    #generate_ssh_key: yes
-    #ssh_key_type: ed25519
-    #ssh_key_file: .ssh/borgmatic
+
+- name: Create borg user on Backup server
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.user:
+    name: borg
+    shell: /bin/bash
+    password: '!'
 
 - name: Create borg users ~/.ssh if it does not exist
   ansible.builtin.file:
@@ -175,7 +179,7 @@
     inventory: "AWX Server"
     project: "AWX Ansible"
     playbook: projects/backup.yml
-    credentials: [ "AWX SSH Key", "Borgmatic SSH Password" ]
+    credentials: [ "AWX SSH Key", "Borgmatic Password" ]
     extra_vars: { awx_url: "{{ awx_url }}", BORG_PASSPHRASE: "{{ backup_passphrase }}", ansible_user: "borg" }
     state: present
     verbosity: 1
