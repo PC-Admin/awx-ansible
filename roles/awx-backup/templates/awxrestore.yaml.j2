@@ -13,7 +13,7 @@ spec:
 
   # Parameters to restore from existing files on PVC (without AWXBackup object)
   backup_pvc: awx-backup-claim
-  backup_dir: "/data/backup/{{ awx_backup_directory }}/"
+  backup_dir: "/backups/{{ awx_backup_directory }}/"
 
   # Uncomment to reveal "censored" logs
   #no_log: false

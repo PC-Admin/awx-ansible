@@ -92,6 +92,7 @@
   ansible.builtin.slurp:
     src: /home/borg/.ssh/borg_user
   register: borg_user_ssh_private_key
+  no_log: true
 
 - name: Add/Update machine credential
   awx.awx.credential:
@@ -106,10 +107,10 @@
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes
 
-#- name: Delete private borg_user SSH e25519 key
-#  ansible.builtin.file:
-#    state: absent
-#    path: /home/borg/.ssh/borg_user
+- name: Delete private borg_user SSH e25519 key
+  ansible.builtin.file:
+    state: absent
+    path: /home/borg/.ssh/borg_user
 
 - name: Slurp up new borg_user.pub key
   ansible.builtin.slurp:

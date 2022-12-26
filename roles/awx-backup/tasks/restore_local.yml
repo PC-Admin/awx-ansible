@@ -14,10 +14,29 @@
   ansible.builtin.command: kubectl delete pv awx-postgres-13-volume
   ignore_errors: true
 
+#- name: Delete any data in the PV
+#  ansible.builtin.command: rm -rf /data/postgres-13/*
+
 - name: Delete any data in the PV
-  ansible.builtin.command: rm -rf /data/postgres-13/*
+  ansible.builtin.file:
+    path: /data/postgres-13
+    state: absent
 
 #Then prepare directories for your PVs. /data/projects is required if you are restoring the entire AWX to a new environment.
+
+- name: Create /data/postgres-13 directory if it does not exist
+  ansible.builtin.file:
+    path: /data/postgres-13
+    state: directory
+    mode: '0755'
+
+- name: Create /data/projects directory if it does not exist
+  ansible.builtin.file:
+    path: /data/postgres-13
+    state: directory
+    mode: '0755'
+    owner: 1000
+    group: 0
 
 #sudo mkdir -p /data/postgres-13
 #sudo mkdir -p /data/projects
@@ -41,13 +60,13 @@
   ansible.builtin.command: |
       kubectl apply -f /root/awx-on-k3s-1.1.0/restore/awxrestore.yaml
 
-- name: Check if AWX restore completed (max 5min)
+- name: Check if AWX restore completed (max 10min)
   ansible.builtin.command: |
-      kubectl -n awx logs --tail=10 -f deployments/awx-operator-controller-manager
+      kubectl -n awx logs --tail=10 deployments/awx-operator-controller-manager
   register: result
   until: result.stdout.find("failed=0") != -1
   failed_when: result.stdout.find("failed=1") != -1
-  retries: 20
+  retries: 40
   delay: 15
 
 - name: This will create AWXRestore object in the namespace, and now your AWX is restored.
