@@ -1,10 +1,30 @@
 
-# Backup and recover AWX
+# Backup and Restore AWX
 
 
-## Recover from local dump with Ansible.
+## Restore local dumps from the Backup Server with Ansible.
 
-1) Collect the local tower-openshift-backup directory name, for example:
+1) Collect the borg backup id from either the backup server or AWX's 'Backup AWX [List Backups]' template:
+
+```
+borg@backup:~$ borg list ~/AWX/
+Enter passphrase for key /home/borg/AWX:
+...
+awx-2022-12-27T02:02:11              Tue, 2022-12-27 02:02:11 [a2dd0aafca6e1f82b348379feb7ea68a7931b6db62ce06b885421422b8f4a332]
+awx-2022-12-27T03:02:08              Tue, 2022-12-27 03:02:09 [f1fd1553288a05c62277db601033b9717445221afa63481ac0d06c6d9811e051]
+awx-2022-12-27T04:01:58              Tue, 2022-12-27 04:01:58 [efb4e9df782c0cf625e066bc8a2bede804962e309abb788019503cf9b8f36509]
+```
+
+For example: "awx-2022-12-27T04:01:58"
+
+2) Double check the right host is enabled in ./inventory/hosts, then run the playbook:
+
+`$ ansible-playbook -v -i ./inventory/hosts -e "borg_backup='awx-2022-12-27T04:01:58'" playbooks/restore_borg.yml`
+
+
+## Recover AWX from a local dump with Ansible.
+
+1) Collect the local tower-openshift-backup directory name from either the above script, the server itself, or AWX's 'Backup AWX [List Backups]' template:
 
 "tower-openshift-backup-2022-12-24-11:43:33"
 

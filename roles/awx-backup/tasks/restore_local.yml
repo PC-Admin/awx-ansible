@@ -1,7 +1,5 @@
 ---
 
-# If your AWX instance is running, it is recommended that it be deleted along with PVC and PV for the PostgreSQL first, in order to restore to be succeeded.
-
 - name: Delete AWX instance.
   ansible.builtin.command: kubectl -n awx delete awx awx
   ignore_errors: true
@@ -14,15 +12,10 @@
   ansible.builtin.command: kubectl delete pv awx-postgres-13-volume
   ignore_errors: true
 
-#- name: Delete any data in the PV
-#  ansible.builtin.command: rm -rf /data/postgres-13/*
-
 - name: Delete any data in the PV
   ansible.builtin.file:
     path: /data/postgres-13
     state: absent
-
-#Then prepare directories for your PVs. /data/projects is required if you are restoring the entire AWX to a new environment.
 
 - name: Create /data/postgres-13 directory if it does not exist
   ansible.builtin.file:
@@ -37,11 +30,6 @@
     mode: '0755'
     owner: 1000
     group: 0
-
-#sudo mkdir -p /data/postgres-13
-#sudo mkdir -p /data/projects
-#sudo chmod 755 /data/postgres-13
-#sudo chown 1000:0 /data/projects
 
 - name: Then deploy PV and PVC. It is recommended that making the size of PVs and PVCs same as the PVs which your AWX used when the backup was taken.
   ansible.builtin.command: |
@@ -71,3 +59,6 @@
 
 - name: This will create AWXRestore object in the namespace, and now your AWX is restored.
   ansible.builtin.command: kubectl -n awx get awxrestore
+
+- debug:
+    msg: "AWX is now restored! Please wait a minute or two for it to startup."
