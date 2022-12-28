@@ -1,0 +1,109 @@
+
+# start of apache section
+
+- name: Check if Diffie Hellman file already exists
+  delegate_to: '{{ backup_server_ip }}'
+  stat:
+    path: '/etc/ssl/grafana_dhparam.pem'
+  register: stat_result
+
+- name: Generate Diffie-Hellman parameters if not
+  delegate_to: '{{ backup_server_ip }}'
+  openssl_dhparam:
+    path: '/etc/ssl/grafana_dhparam.pem'
+    size: 2048
+  when: not stat_result.stat.exists
+
+- name: Check if the cert for Grafana already exists
+  delegate_to: '{{ backup_server_ip }}'
+  stat:
+    path: '/etc/letsencrypt/live/{{ grafana_url }}/fullchain.pem'
+  register: stat_result_2
+
+- name: Generate letsencrypt certificate for Grafana if not
+  delegate_to: '{{ backup_server_ip }}'
+  command: certbot certonly --apache --noninteractive --agree-tos -m {{ certbot_email }} -d '{{ grafana_url }}'
+  when: not stat_result_2.stat.exists
+
+- name: Creates a crontab entry to renew certbot"
+  delegate_to: '{{ backup_server_ip }}'
+  cron:
+    name: "Renew letsencrypt certificate"
+    special_time: daily
+    user: root
+    job: '/bin/sh /usr/bin/certbot renew --quiet --no-self-upgrade'
+
+- name: Make sure prerequisite Apache units are enabled on Backup Server (1/5)
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.command: a2enmod proxy
+  args:
+    creates: '/etc/apache2/mods-enabled/proxy.load'
+
+- name: Make sure prerequisite Apache units are enabled on Backup Server (2/5)
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.command: a2enmod proxy_http
+  args:
+    creates: '/etc/apache2/mods-enabled/proxy_http.load'
+
+- name: Make sure prerequisite Apache units are enabled on Backup Server (3/5)
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.command: a2enmod rewrite
+  args:
+    creates: '/etc/apache2/mods-enabled/rewrite.load'
+
+- name: Make sure prerequisite Apache units are enabled on Backup Server (4/5)
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.command: a2enmod ssl
+  args:
+    creates: '/etc/apache2/mods-enabled/ssl.load'
+
+- name: Make sure prerequisite Apache units are enabled on Backup Server (5/5)
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.command: a2enmod headers
+  args:
+    creates: '/etc/apache2/mods-enabled/headers.load'
+
+- name: Template the HTTPS site for Grafana on Backup Server
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.template:
+    src: '{{ role_path }}/templates/apache-https.conf.j2'
+    dest: /etc/apache2/sites-available/{{ grafana_url }}.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Template the SSL config for apache on Backup Server
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.template:
+    src: '{{ role_path }}/templates/ssl.conf'
+    dest: /etc/apache2/mods-available/ssl.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Enable HTTPS site for Grafana on Backup Server
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.command: 'a2ensite {{ grafana_url }}.conf'
+  args:
+    creates: '/etc/apache2/sites-enabled/{{ grafana_url }}.conf'
+
+- name: Disable default Apache site on Backup Server
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.command: 'a2dissite 000-default.conf'
+  args:
+    removes: '/etc/apache2/sites-enabled/000-default.conf'
+
+- name: Test that there are no errors in the syntax of the new Apache config file
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.command: apache2ctl configtest
+
+- name: Restart Apache unit on Backup Server
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.systemd:
+    state: restarted
+    name: apache2
+    enabled: yes
+
+- name: Pause for 15 seconds so Grafana can warm up
+  pause:
+    seconds: 15

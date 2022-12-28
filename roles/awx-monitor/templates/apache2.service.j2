@@ -1,0 +1,30 @@
+#jinja2: lstrip_blocks: "True"
+[Unit]
+Description=apache2
+DefaultDependencies=no
+
+[Service]
+Type=simple
+Environment="HTTP_PROXY=http://{{ grafana_url }}:80"
+Environment="HTTPS_PROXY=https://{{ grafana_url }}:443"
+Environment="NO_PROXY=localhost,127.0.0.1,docker-registry.example.com,.corp"
+ExecStartPre=-/usr/bin/env sh -c '/usr/bin/env docker kill httpd 2>/dev/null || true'
+ExecStartPre=-/usr/bin/env sh -c '/usr/bin/env docker rm httpd 2>/dev/null || true'
+
+ExecStart=/usr/bin/env docker run --rm --name apache2 \
+			-p "80:80" -p "443:443" \
+			-v "/etc/apache2/index.html":/usr/local/apache2/htdocs/index.html \
+			httpd
+
+#			--log-driver=none \
+#			--cap-drop=ALL \
+#			-v "$PWD":/usr/local/apache2/htdocs/ \
+
+ExecStop=-/usr/bin/env sh -c '/usr/bin/env docker kill httpd 2>/dev/null || true'
+ExecStop=-/usr/bin/env sh -c '/usr/bin/env docker rm httpd 2>/dev/null || true'
+Restart=on-failure
+RestartSec=30
+SyslogIdentifier=apache2
+
+[Install]
+WantedBy=multi-user.target

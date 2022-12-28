@@ -27,10 +27,11 @@
   ansible.builtin.package:
     pkg:
     - docker.io
-    - apache2
-    - apt-transport-https
-    - certbot
-    - python3-certbot-apache
+    - docker-compose
+    #- apache2
+    #- apt-transport-https
+    #- certbot
+    #- python3-certbot-apache
   register: package_status
   until: package_status is success
   delay: 6
@@ -75,7 +76,7 @@
 #  command: /usr/bin/docker stop grafana
 #  ignore_errors: True
 
-- name: Ensure grafana image is pulled
+- name: Ensure Grafana image is pulled
   delegate_to: '{{ backup_server_ip }}'
   command: docker pull grafana/grafana 
 
@@ -86,116 +87,181 @@
     dest: "/etc/systemd/system/grafana.service"
     mode: 0644
 
-- name: Start and enable new grafana unit on Backup Server
+- name: Git checkout
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.git:
+    repo: 'https://github.com/Spansky/apache-and-letsencrypt.git'
+    dest: /root/apache-and-letsencrypt/
+    version: 054d09ad17edcce73acc3fe038ed14084233cb50
+    force: true
+
+#- name: Extract apache-and-letsencrypt.tar.xz repo to /root
+#  delegate_to: '{{ backup_server_ip }}'
+#  unarchive:
+#    src: '{{ role_path }}/repos/apache-and-letsencrypt.tar.xz'
+#    dest: /root/
+#    owner: root
+#    group: root
+
+- name: Ensure index.html file for apache is templated
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.template:
+    src: "{{ role_path }}/templates/temp_apache/index.html"
+    dest: "/root/apache-and-letsencrypt/letsencrypt/html/index.html"
+    mode: 0644
+
+- name: Ensure Dockerfile for apache is templated
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.template:
+    src: "{{ role_path }}/templates/temp_apache/Dockerfile"
+    dest: "/root/apache-and-letsencrypt/letsencrypt/"
+    mode: 0644
+
+- name: Ensure httpd.conf for apache is templated
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.template:
+    src: "{{ role_path }}/templates/temp_apache/httpd.conf.j2"
+    dest: "/root/apache-and-letsencrypt/letsencrypt/httpd.conf"
+    mode: 0644
+
+- name: Ensure docker-compose.yml for apache is templated
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.template:
+    src: "{{ role_path }}/templates/temp_apache/docker-compose.yml"
+    dest: "/root/apache-and-letsencrypt/letsencrypt/docker-compose.yml"
+    mode: 0644
+
+#    Build the webserver via docker build -t lets-encrypt-apache .
+
+- name: Build the temporary letsencrypt-apache Docker image
+  delegate_to: '{{ backup_server_ip }}'
+  command: docker build -t letsencrypt-apache .
+  args:
+    chdir: /root/apache-and-letsencrypt/letsencrypt/
+    creates: /docker-volumes/etc/letsencrypt/live/{{ grafana_url }}/fullchain.pem
+
+#    Start it via docker-compose up -d
+
+- name: Start it via docker-compose up -d
+  delegate_to: '{{ backup_server_ip }}'
+  command: docker-compose up -d
+  args:
+    chdir: /root/apache-and-letsencrypt/letsencrypt/
+    creates: /docker-volumes/etc/letsencrypt/live/{{ grafana_url }}/fullchain.pem
+
+# $ docker run -it --rm -v /docker-volumes/etc/letsencrypt:/etc/letsencrypt -v /docker-volumes/var/lib/letsencrypt:/var/lib/letsencrypt 
+# -v $PWD/html:/data/letsencrypt -v /docker-volumes/var/log/letsencrypt:/var/log/letsencrypt certbot/certbot certonly --webroot --email perthchat@protonmail.com 
+# --agree-tos --no-eff-email --webroot-path=/data/letsencrypt -d grafana2.snowsupport.top
+
+- name: When your webserver is running, start the certbot docker (from dockerhub)
+  delegate_to: '{{ backup_server_ip }}'
+  shell: |
+      docker run -it --rm \
+      -v /docker-volumes/etc/letsencrypt:/etc/letsencrypt \
+      -v /docker-volumes/var/lib/letsencrypt:/var/lib/letsencrypt \
+      -v $PWD/html:/data/letsencrypt \
+      -v /docker-volumes/var/log/letsencrypt:/var/log/letsencrypt \
+      certbot/certbot \
+      certonly --webroot \
+      --email {{ certbot_email }} --agree-tos --no-eff-email \
+      --webroot-path=/data/letsencrypt \
+      -d {{ grafana_url }}
+  args:
+    chdir: /root/apache-and-letsencrypt/letsencrypt/
+    creates: /docker-volumes/etc/letsencrypt/live/{{ grafana_url }}/fullchain.pem
+  register: run_certbot_output
+
+- debug:
+    msg: "{{ run_certbot_output.stdout }}"
+
+- name: Create fact for successful letsencrypt request
+  set_fact:
+    success_message: "Successfully received certificate."
+  args:
+    creates: /docker-volumes/etc/letsencrypt/live/{{ grafana_url }}/fullchain.pem
+
+- name: If the letsencrypt request succeeded, run docker-compose down
+  delegate_to: '{{ backup_server_ip }}'
+  command: |
+      docker-compose down
+  args:
+    chdir: /root/apache-and-letsencrypt/letsencrypt/
+#  when: success_message in run_certbot_output.stdout
+
+# contains "Successfully received certificate."
+
+- name: Ensure Dockerfile for prod-apache is templated
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.template:
+    src: "{{ role_path }}/templates/prod_apache/Dockerfile"
+    dest: "/root/apache-and-letsencrypt/production/"
+    mode: 0644
+
+- name: Ensure httpd.conf for prod-apache is templated
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.template:
+    src: "{{ role_path }}/templates/prod_apache/httpd.conf.j2"
+    dest: "/root/apache-and-letsencrypt/production/httpd.conf"
+    mode: 0644
+
+- name: Ensure docker-compose.yml for prod-apache is templated
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.template:
+    src: "{{ role_path }}/templates/prod_apache/docker-compose.yml.j2"
+    dest: "/root/apache-and-letsencrypt/production/docker-compose.yml"
+    mode: 0644
+
+- name: Build the production apache Docker image
+  delegate_to: '{{ backup_server_ip }}'
+  command: docker build -t productive-apache .
+  args:
+    chdir: /root/apache-and-letsencrypt/production/
+
+- name: Start it via docker-compose up -d
+  delegate_to: '{{ backup_server_ip }}'
+  command: docker-compose up -d
+  args:
+    chdir: /root/apache-and-letsencrypt/production/
+
+
+#0 23 * * * docker run --rm -it --name certbot -v "/docker-volumes/etc/letsencrypt:/etc/letsencrypt" /
+#-v "/docker-volumes/var/lib/letsencrypt:/var/lib/letsencrypt" /
+#-v "/docker-volumes/data/letsencrypt:/data/letsencrypt" /
+#-v "/docker-volumes/var/log/letsencrypt:/var/log/letsencrypt" /
+# certbot/certbot renew --webroot -w /data/letsencrypt --quiet /
+# && docker kill --signal=HUP production-nginx-container
+
+#- name: Build the Apache Docker image
+#  delegate_to: '{{ backup_server_ip }}'
+#  command: docker build -t apache2 .
+#  args:
+#    chdir: /root/
+
+#- name: Ensure Apache image is pulled
+#  delegate_to: '{{ backup_server_ip }}'
+#  command: docker pull httpd
+
+- name: Ensure grafana.service installed
+  delegate_to: '{{ backup_server_ip }}'
+  ansible.builtin.template:
+    src: "{{ role_path }}/templates/apache2.service.j2"
+    dest: "/etc/systemd/system/apache2.service"
+    mode: 0644
+
+- name: Start and enable new Grafana unit on Backup Server
   delegate_to: '{{ backup_server_ip }}'
   ansible.builtin.systemd:
-    state: started
+    state: restarted
     name: grafana
+    daemon_reload: yes
     enabled: yes
 
-- name: Check if Diffie Hellman file already exists
-  delegate_to: '{{ backup_server_ip }}'
-  stat:
-    path: '/etc/ssl/grafana_dhparam.pem'
-  register: stat_result
-
-- name: Generate Diffie-Hellman parameters if not
-  delegate_to: '{{ backup_server_ip }}'
-  openssl_dhparam:
-    path: '/etc/ssl/grafana_dhparam.pem'
-    size: 2048
-  when: not stat_result.stat.exists
-
-- name: Check if the cert for Grafana already exists
-  delegate_to: '{{ backup_server_ip }}'
-  stat:
-    path: '/etc/letsencrypt/live/{{ grafana_url }}/fullchain.pem'
-  register: stat_result_2
-
-- name: Generate letsencrypt certificate for Grafana if not
-  delegate_to: '{{ backup_server_ip }}'
-  command: certbot certonly --apache --noninteractive --agree-tos -m {{ certbot_email }} -d '{{ grafana_url }}'
-  when: not stat_result_2.stat.exists
-
-- name: Creates a crontab entry to renew certbot"
-  delegate_to: '{{ backup_server_ip }}'
-  cron:
-    name: "Renew letsencrypt certificate"
-    special_time: daily
-    user: root
-    job: '/bin/sh /usr/bin/certbot renew --quiet --no-self-upgrade'
-
-- name: Make sure prerequisite Apache units are enabled on Backup Server (1/5)
-  delegate_to: '{{ backup_server_ip }}'
-  ansible.builtin.command: a2enmod proxy
-  args:
-    creates: '/etc/apache2/mods-enabled/proxy.load'
-
-- name: Make sure prerequisite Apache units are enabled on Backup Server (2/5)
-  delegate_to: '{{ backup_server_ip }}'
-  ansible.builtin.command: a2enmod proxy_http
-  args:
-    creates: '/etc/apache2/mods-enabled/proxy_http.load'
-
-- name: Make sure prerequisite Apache units are enabled on Backup Server (3/5)
-  delegate_to: '{{ backup_server_ip }}'
-  ansible.builtin.command: a2enmod rewrite
-  args:
-    creates: '/etc/apache2/mods-enabled/rewrite.load'
-
-- name: Make sure prerequisite Apache units are enabled on Backup Server (4/5)
-  delegate_to: '{{ backup_server_ip }}'
-  ansible.builtin.command: a2enmod ssl
-  args:
-    creates: '/etc/apache2/mods-enabled/ssl.load'
-
-- name: Make sure prerequisite Apache units are enabled on Backup Server (5/5)
-  delegate_to: '{{ backup_server_ip }}'
-  ansible.builtin.command: a2enmod headers
-  args:
-    creates: '/etc/apache2/mods-enabled/headers.load'
-
-- name: Template the HTTPS site for Grafana on Backup Server
-  delegate_to: '{{ backup_server_ip }}'
-  ansible.builtin.template:
-    src: '{{ role_path }}/templates/apache-https.conf.j2'
-    dest: /etc/apache2/sites-available/{{ grafana_url }}.conf
-    owner: root
-    group: root
-    mode: '0644'
-
-- name: Template the SSL config for apache on Backup Server
-  delegate_to: '{{ backup_server_ip }}'
-  ansible.builtin.template:
-    src: '{{ role_path }}/templates/ssl.conf'
-    dest: /etc/apache2/mods-available/ssl.conf
-    owner: root
-    group: root
-    mode: '0644'
-
-- name: Enable HTTPS site for Grafana on Backup Server
-  delegate_to: '{{ backup_server_ip }}'
-  ansible.builtin.command: 'a2ensite {{ grafana_url }}.conf'
-  args:
-    creates: '/etc/apache2/sites-enabled/{{ grafana_url }}.conf'
-
-- name: Disable default Apache site on Backup Server
-  delegate_to: '{{ backup_server_ip }}'
-  ansible.builtin.command: 'a2dissite 000-default.conf'
-  args:
-    removes: '/etc/apache2/sites-enabled/000-default.conf'
-
-- name: Test that there are no errors in the syntax of the new Apache config file
-  delegate_to: '{{ backup_server_ip }}'
-  ansible.builtin.command: apache2ctl configtest
-
-- name: Restart Apache unit on Backup Server
+- name: Start and enable new Apache unit on Backup Server
   delegate_to: '{{ backup_server_ip }}'
   ansible.builtin.systemd:
     state: restarted
     name: apache2
+    daemon_reload: yes
     enabled: yes
 
-- name: Pause for 15 seconds so Grafana can warm up
-  pause:
-    seconds: 15
+#    When your webserver is running, start the certbot docker (from dockerhub)

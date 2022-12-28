@@ -1,0 +1,21 @@
+#jinja2: lstrip_blocks: "True"
+[Unit]
+Description=production-apache
+DefaultDependencies=no
+
+[Service]
+Type=simple
+Environment="HOME=/root"
+ExecStartPre=-/usr/bin/env sh -c '/usr/bin/env docker kill production-apache 2>/dev/null || true'
+ExecStartPre=-/usr/bin/env sh -c '/usr/bin/env docker rm production-apache 2>/dev/null || true'
+
+ExecStart=/usr/bin/env docker run --rm --name production-apache production-nginx-container
+
+ExecStop=-/usr/bin/env sh -c '/usr/bin/env docker kill production-apache 2>/dev/null || true'
+ExecStop=-/usr/bin/env sh -c '/usr/bin/env docker rm production-apache 2>/dev/null || true'
+Restart=on-failure
+RestartSec=30
+SyslogIdentifier=production-apache
+
+[Install]
+WantedBy=multi-user.target
