@@ -207,12 +207,12 @@
   set_fact:
     rrule_line_backup_awx: "DTSTART;TZID={{ timezone_output.stdout }}:{{ backup_awx_schedule_start }} RRULE:FREQ={{ backup_awx_schedule_frequency }};INTERVAL={{ backup_awx_schedule_interval }}"
 
-- name: Build a schedule for 'Backup AWX' workflow template
+- name: Build a schedule for 'AWX Backup' workflow template
   awx.awx.tower_schedule:
-    name: "Backup AWX"
+    name: "AWX Backup"
     enabled: yes
     state: present
-    unified_job_template: "Backup AWX"
+    unified_job_template: "AWX Backup"
     rrule: "{{ rrule_line_backup_awx }}"
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"

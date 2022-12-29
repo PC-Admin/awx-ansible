@@ -25,8 +25,8 @@
     inventory: "AWX Server"
     project: "AWX Ansible"
     playbook: "playbooks/check_awx.yml"
-    credentials: [ "AWX SSH Key", "Borgmatic Password" ]
-    extra_vars: { awx_url: "{{ awx_url }}", BORG_PASSPHRASE: "{{ backup_passphrase }}", ansible_user: "borg" }
+    #credentials: [ "AWX SSH Key", "Borgmatic Password" ]
+    extra_vars: { awx_url: "{{ awx_url }}", awx_token: "{{ awx_session_token.ansible_facts.tower_token.token }}" }
     state: present
     verbosity: 1
     tower_host: "https://{{ awx_url }}"

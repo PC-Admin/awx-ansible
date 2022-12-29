@@ -5,8 +5,28 @@
   gather_facts: false
 
   tasks:
-    - name: "Find the /projects folder."
-      shell: find / -name "projects"
+    - name: "Construct a URL for the AWX ping API."
+      set_fact:
+        awx_api_ping: "https://{{ awx_url }}/api/v2/ping/"
+        success_code: "200"
 
-    - name: "Find the /awx folder."
-      shell: find / -name "awx"
+    - name: "Do a simple probe of the ping API"
+      ansible.builtin.get_url:
+        url: "{{ awx_api_ping }}"
+        dest: /home/runner/.ansible/tmp/output.txt
+        headers:
+          Authorization: "{{ awx_token }}"
+      register: ping_output
+
+    - name: "Convert the collected status code to a string."
+      set_fact:
+        ping_output_code: "{{ ping_output.status_code | string }}"
+
+    - name: Fail if the returned status code is not '200'
+      ansible.builtin.fail:
+        msg: The AWX system can't be pinged and seems to be offline.
+      when: ping_output_code.find(success_code) == -1
+
+    - name: "Success!"
+      debug:
+        msg: "Your AWX system is online and it seems to be working!"
