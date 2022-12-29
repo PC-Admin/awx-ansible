@@ -1,0 +1,112 @@
+---
+
+- name: Add slug_size line to inventory file
+  delegate_to: 127.0.0.1
+  lineinfile:
+    path: './inventory/host_vars/{{ server_url }}/vars.yml'
+    regexp: "^{{ item.key | regex_escape() }}:"
+    line: "{{ item.key }}: {{ item.value }}"
+    mode: '0600'
+    state: present
+  with_dict:
+    'slug_size': '"{{ new_slug_size }}"'
+
+- name: Add server_ipv4 line to inventory file
+  delegate_to: 127.0.0.1
+  lineinfile:
+    path: './inventory/host_vars/{{ server_url }}/vars.yml'
+    regexp: "^#? *{{ item.key | regex_escape() }}:"
+    line: "{{ item.key }}: {{ item.value }}"
+    mode: '0600'
+    state: present
+  with_dict:
+    'server_ipv4': '"{{ server_ipv4 }}"'
+  when: server_ipv4|length > 0
+
+- name: Add server_ipv6 line to inventory file
+  delegate_to: 127.0.0.1
+  lineinfile:
+    path: './inventory/host_vars/{{ server_url }}/vars.yml'
+    regexp: "^#? *{{ item.key | regex_escape() }}:"
+    line: "{{ item.key }}: {{ item.value }}"
+    mode: '0600'
+    state: present
+  with_dict:
+    'server_ipv6': '"{{ server_ipv6 }}"'
+  when: server_ipv6|length > 0
+
+- name: Add do_droplet_id line to inventory file
+  delegate_to: 127.0.0.1
+  lineinfile:
+    path: './inventory/host_vars/{{ server_url }}/vars.yml'
+    regexp: "^{{ item.key }}:.*$"
+    line: "{{ item.key }}: {{ item.value }}"
+    mode: '0600'
+    state: present
+  with_dict:
+    'do_droplet_id': '{{ new_server_info.data.droplet.id }}'
+
+- name: Add SSH config entry for host
+  delegate_to: 127.0.0.1
+  ansible.builtin.blockinfile:
+    path: "/home/{{ lookup('env', 'USER') }}/.ssh/config"
+    marker_begin: "BEGIN SSH config entry for {{ server_url }}"
+    marker_end: "END SSH config entry for {{ server_url }}"
+    block: |
+      Host {{ server_url }}
+          HostName {{ server_ip_final }}
+          User root
+          Port 22
+          IdentityFile {{ ssh_key_file_private }}
+          IdentitiesOnly=yes
+
+- name: Add SSH config entry for host if SSHing by IP is needed
+  delegate_to: 127.0.0.1
+  ansible.builtin.blockinfile:
+    path: "/home/{{ lookup('env', 'USER') }}/.ssh/config"
+    marker_begin: "BEGIN SSH config entry for {{ server_ip_final }}"
+    marker_end: "END SSH config entry for {{ server_ip_final }}"
+    block: |
+      Host {{ server_ip_final }}
+          HostName {{ server_ip_final }}
+          User root
+          Port 22
+          IdentityFile {{ ssh_key_file_private }}
+          IdentitiesOnly=yes
+  when: server_ssh_by_ip | bool
+
+- name: Add HOSTALIASES environment variable to ~/.profile
+  delegate_to: 127.0.0.1
+  lineinfile:
+    path: '~/.profile'
+    create: true
+    line: "HOSTALIASES ~/.hosts"
+    mode: '0600'
+    state: present
+
+- name: Add host entry to ~/.hosts file
+  delegate_to: 127.0.0.1
+  lineinfile:
+    path: '~/.hosts'
+    create: true
+    regexp: "^.*{{ server_url }}$"
+    line: "{{ server_ipv4 }} {{ server_url }}"
+    mode: '0600'
+    state: present
+
+- name: Check known_hosts for {{ inventory_hostname }}
+  local_action: shell ssh-keygen -F {{ inventory_hostname }}
+  register: has_entry_in_known_hosts_file
+  changed_when: false
+  ignore_errors: true
+
+- name: Ignore host key for {{ inventory_hostname }} on first run
+  set_fact:
+    ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+  when: has_entry_in_known_hosts_file.rc == 1
+
+- name: Wait for SSH connection to become available, with 5 seconds between checks
+  delegate_to: "{{ server_url }}"
+  wait_for_connection:
+    sleep: 5
+    timeout: 60

@@ -1,0 +1,16 @@
+
+# Spawn a Server
+- import_tasks: "{{ role_path }}/tasks/spawn_do_droplet.yml"
+  tags: [ 'never', 'provision' ]
+
+# Save server IPs
+- import_tasks: "{{ role_path }}/tasks/save_server_ips.yml"
+  tags: [ 'never', 'provision' ]
+
+# Create Cloudflare DNS entry
+- import_tasks: "{{ role_path }}/tasks/cloudflare_dns.yml"
+  tags: [ 'never', 'provision' ]
+
+# Create initial variable files
+- import_tasks: "{{ role_path }}/tasks/generate_initial_variables.yml"
+  tags: [ 'never', 'provision' ]

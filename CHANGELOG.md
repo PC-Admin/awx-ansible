@@ -1,4 +1,11 @@
 
+## AWX Ansible v0.0.7 [2022-12-29]
+
+- Added semi-automated recovery for AWX.
+- Added a 'AWX Status Check' template to examine if AWX is functional.
+- Fix compatibility for Debian 11.
+- Refactor of the entire playbook.
+
 ## AWX Ansible v0.0.6 [2022-12-25]
 
 - Refined the grafana monitor. 

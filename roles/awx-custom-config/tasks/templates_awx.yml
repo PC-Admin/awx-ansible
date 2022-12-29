@@ -9,8 +9,9 @@
     project: "AWX Ansible"
     playbook: setup.yml
     ask_extra_vars: yes
-    survey_enabled: true
-    survey_spec: "{{ lookup('file', '{{ role_path }}/surveys/update_all.json') }}"
+    #survey_enabled: true
+    #survey_spec: "{{ lookup('file', '{{ role_path }}/surveys/update_all.json') }}"
+    job_tags: [ "provision" ]
     state: present
     verbosity: 1
     tower_host: "https://{{ awx_url }}"

@@ -46,7 +46,7 @@
 
     - name: Modify the name of the AWXRestore object in restore/awxrestore.yaml.
       ansible.builtin.template:
-        src: '{{ role_path }}/templates/awxrestore.yaml.j2'
+        src: './templates/awxrestore.yaml.j2'
         dest: '/root/awx-on-k3s-1.1.0/restore/awxrestore.yaml'
 
     - name: Then invoke restore by applying this manifest file

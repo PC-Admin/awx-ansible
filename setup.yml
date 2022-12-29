@@ -5,6 +5,7 @@
   become: true
 
   roles:
+    #- awx-provision
     - awx-install
     - awx-custom-config
     - awx-backup
