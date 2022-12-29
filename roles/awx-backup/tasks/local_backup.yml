@@ -93,15 +93,29 @@
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes
 
-- name: Create 'Backup AWX [Local Dump]' job template
+- name: Create 'AWX Backup [Local Dump]' job template
   awx.awx.tower_job_template:
-    name: "Backup AWX [Local Dump]"
+    name: "AWX Backup [Local Dump]"
     description: "Backs up the AWX host system, dumping a snapshot of it to the local disk."
     job_type: run
     inventory: "Localhost"
     project: "AWX on K3s"
     playbook: backup/ansible/project/backup.yml
     instance_groups: ["AWX Server (Custom Runner)"]
+    state: present
+    verbosity: 1
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes
+
+- name: Create 'AWX Recover [Local Dump]' job template
+  awx.awx.tower_job_template:
+    name: "AWX Recover [Local Dump]"
+    description: "Backs up the AWX host system, dumping a snapshot of it to the local disk."
+    job_type: run
+    inventory: "Localhost"
+    project: "AWX Ansible"
+    playbook: playbooks/restore_local.yml
     state: present
     verbosity: 1
     tower_host: "https://{{ awx_url }}"

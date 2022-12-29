@@ -1,6 +1,6 @@
 ---
 
-- name: Create 'Deploy AWX Server' job template
+- name: Create 'Deploy an AWX Server' job template
   awx.awx.tower_job_template:
     name: "Deploy an AWX Server"
     description: "Creates another AWX server with your existing AWX server."
@@ -11,6 +11,22 @@
     ask_extra_vars: yes
     survey_enabled: true
     survey_spec: "{{ lookup('file', '{{ role_path }}/surveys/update_all.json') }}"
+    state: present
+    verbosity: 1
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes
+
+- name: Create 'AWX Status Check' job template
+  awx.awx.tower_job_template:
+    name: "AWX Status Check"
+    description: "Checks to see if the AWX server is functional."
+    job_type: run
+    inventory: "AWX Server"
+    project: "AWX Ansible"
+    playbook: "playbooks/check_awx.yml"
+    credentials: [ "AWX SSH Key", "Borgmatic Password" ]
+    extra_vars: { awx_url: "{{ awx_url }}", BORG_PASSPHRASE: "{{ backup_passphrase }}", ansible_user: "borg" }
     state: present
     verbosity: 1
     tower_host: "https://{{ awx_url }}"

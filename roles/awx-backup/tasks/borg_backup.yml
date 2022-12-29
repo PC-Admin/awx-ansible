@@ -143,9 +143,9 @@
     group: borg
     mode: '0600'
 
-- name: Create 'Backup AWX [Borgmatic]' job template
+- name: Create 'AWX Backup [Borgmatic]' job template
   awx.awx.tower_job_template:
-    name: "Backup AWX [Borgmatic]"
+    name: "AWX Backup [Borgmatic]"
     description: "Backs up the AWX host system to the external Backup Server."
     job_type: run
     inventory: "AWX Server"
@@ -159,15 +159,31 @@
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes
 
-- name: Create 'Backup AWX' workflow template
+- name: Create 'AWX Recover [Borgmatic]' job template
+  awx.awx.tower_job_template:
+    name: "AWX Recover [Borgmatic]"
+    description: "Recovers a borg backup of local dumps to the target AWX server."
+    job_type: run
+    inventory: "AWX Server"
+    project: "AWX Ansible"
+    playbook: "playbooks/restore_borg.yml"
+    credentials: [ "AWX SSH Key", "Borgmatic Password" ]
+    extra_vars: { awx_url: "{{ awx_url }}", BORG_PASSPHRASE: "{{ backup_passphrase }}", ansible_user: "borg" }
+    state: present
+    verbosity: 1
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes
+
+- name: Create 'AWX Backup' workflow template
   awx.awx.workflow_job_template:
-    name: "Backup AWX"
+    name: "AWX Backup"
     description: "Backup the AWX server by first making a local dump, then using borgmatic to back it up."
     workflow_nodes:
       - identifier: "Local Dump"
         job_type: run
         unified_job_template:
-          name: "Backup AWX [Local Dump]"
+          name: "AWX Backup [Local Dump]"
           type: job_template
         related:
           success_nodes:
@@ -177,7 +193,7 @@
       - identifier: "Borgmatic"
         job_type: run
         unified_job_template:
-          name: "Backup AWX [Borgmatic]"
+          name: "AWX Backup [Borgmatic]"
           type: job_template
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
@@ -202,14 +218,14 @@
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes
 
-- name: Create 'Backup AWX [List Backups]' job template
+- name: Create 'AWX Backup [List Backups]' job template
   awx.awx.tower_job_template:
-    name: "Backup AWX [List Backups]"
+    name: "AWX Backup [List Backups]"
     description: "Lists the local dumps on the AWX server and the remote borgmatic history."
     job_type: run
     inventory: "AWX Server"
     project: "AWX Ansible"
-    playbook: playbooks/backups-list.yml
+    playbook: playbooks/backups_list.yml
     credential: "AWX SSH Key"
     extra_vars: { awx_url: "{{ awx_url }}", backup_server_ip: "{{ backup_server_ip }}", BORG_PASSPHRASE: "{{ backup_passphrase }}", ansible_user: "borg" }
     state: present
