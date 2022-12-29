@@ -1,0 +1,12 @@
+---
+
+- name: "Examing is the AWX server is still online and functional. This playbook can only be run inside AWX."
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: "Find the /projects folder."
+      shell: find / -name "projects"
+
+    - name: "Find the /awx folder."
+      shell: find / -name "awx"

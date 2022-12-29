@@ -1,9 +1,14 @@
 ---
 
-- name: Include AWX master token from awx_tokens.yml
-  delegate_to: localhost
+- name: Copy tokens.yml file to local machine
+  ansible.builtin.fetch:
+    src: /data/projects/awx/tokens.yml
+    dest: /tmp/tokens.yml
+    flat: yes
+
+- name: Include AWX/Automation Controller master token from awx_tokens.yml
   include_vars:
-    file: /tmp/awx/tokens.yml
+    file: /tmp/tokens.yml
   no_log: True
 
 - name: Create a AWX session token for executing AWX modules

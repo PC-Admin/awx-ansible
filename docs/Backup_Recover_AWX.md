@@ -28,9 +28,9 @@ For example: "awx-2022-12-27T04:01:58"
 
 "tower-openshift-backup-2022-12-24-11:43:33"
 
-2) Run the playbook with the recover-awx-local tag:
+2) Run the restore_local playbook with this value:
 
-`$ ansible-playbook -v -i ./inventory/hosts -e "awx_backup_directory='tower-openshift-backup-2022-12-24-11:43:33'" -t "recover-awx-local" setup.yml`
+`$ ansible-playbook -v -i ./inventory/hosts -e "awx_backup_directory='tower-openshift-backup-2022-12-24-11:43:33'" playbooks/restore_local.yml`
 
 
 ## Backup manually with: https://github.com/kurokobo/awx-on-k3s/tree/main/backup/#back-up-awx-manually

@@ -8,7 +8,3 @@
 - import_tasks: "{{ role_path }}/tasks/borg_backup.yml"
   when: backup_enabled | bool
   tags: [ 'never', 'setup-backup' ]
-
-# Restore AWX from local dump folder.
-- import_tasks: "{{ role_path }}/tasks/restore_local.yml"
-  tags: [ 'never', 'recover-awx-local' ]
