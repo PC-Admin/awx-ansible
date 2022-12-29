@@ -11,4 +11,5 @@
   retries: 10
 
 - name: Add k9s snap for Ubuntu 22.04 or Debian 11
-  command: snap install k9s
+  community.general.snap:
+    name: k9s

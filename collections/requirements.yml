@@ -1,0 +1,15 @@
+---
+
+collections:
+  # Install collections from Ansible Galaxy.
+  - name: community.general.ufw
+    version: latest
+    source: https://galaxy.ansible.com
+
+  - name: community.general.snap
+    version: latest
+    source: https://galaxy.ansible.com
+
+  - name: community.digitalocean.digital_ocean
+    version: latest
+    source: https://galaxy.ansible.com
