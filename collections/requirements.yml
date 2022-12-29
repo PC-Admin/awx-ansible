@@ -1,5 +1,3 @@
----
-
 collections:
   - name: community.general.ufw
   - name: community.general.snap
