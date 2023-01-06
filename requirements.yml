@@ -2,6 +2,5 @@
 roles: []
 
 collections:
-  - name: community.general.ufw
-  - name: community.general.snap
-  - name: community.digitalocean.digital_ocean
+  - name: community.general
+  - name: community.digitalocean
