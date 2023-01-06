@@ -97,6 +97,28 @@
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes
 
+- name: Add AWX host to the {{ org_name }} inventory
+  awx.awx.tower_host:
+    name: "{{ new_awx_url }}"
+    description: "A new AWX Server, accessed at its URL."
+    inventory: "{{ org_name }}"
+    state: present
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes
+  ignore_errors: True
+
+- name: Add group awx_servers
+  awx.awx.tower_group:
+    name: awx_servers
+    description: "AWX servers."
+    inventory: "{{ org_name }}"
+    hosts: "{{ new_awx_url }}"
+    state: present
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes
+
 - name: Delete the AWX session token for executing modules
   awx.awx.tower_token:
     description: 'AWX Session Token'

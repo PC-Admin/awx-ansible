@@ -36,6 +36,10 @@ backup_awx_schedule_start: '20200101T000000'  # Borgbackup Job Template Schedule
 backup_awx_schedule_frequency: 'HOURLY'
 backup_awx_schedule_interval: 1
 
+# Backup Rehearsal Settings
+backup_rehearsal_enabled: false
+new_awx_url: awxnew.example.org
+
 # Monitor Settings
 monitor_enabled: false
 grafana_url: grafana.example.org                    # URL of the Grafana service
