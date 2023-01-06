@@ -8,10 +8,10 @@
     inventory: "{{ org_name }}"
     project: "AWX Ansible"
     playbook: setup.yml
-    ask_extra_vars: yes
+    ask_extra_vars: no
     #survey_enabled: true
     #survey_spec: "{{ lookup('file', '{{ role_path }}/surveys/update_all.json') }}"
-    job_tags: [ "provision" ]
+    job_tags: provision, setup, setup-firewall, master-token, configure-awx
     state: present
     verbosity: 1
     tower_host: "https://{{ awx_url }}"
