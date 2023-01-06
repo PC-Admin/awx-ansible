@@ -34,8 +34,8 @@
 - name: Create borg user on AWX server
   ansible.builtin.user:
     name: borg
-    #shell: /bin/bash
-    shell: /bin/rbash
+    shell: /bin/bash
+    #shell: /bin/rbash
     password: '!'
 
 - name: Create borg user on Backup server
@@ -188,12 +188,28 @@
         related:
           success_nodes:
             - identifier: "Borgmatic"
-          failure_nodes: []
+          failure_nodes:
+            - identifier: "Error Report 1"
           always_nodes: []
       - identifier: "Borgmatic"
         job_type: run
         unified_job_template:
           name: "AWX Backup [Borgmatic]"
+          type: job_template
+        related:
+          success_nodes: []
+          failure_nodes:
+            - identifier: "Error Report 2"
+          always_nodes: []
+      - identifier: "Error Report 1"
+        job_type: run
+        unified_job_template:
+          name: "AWX Error Report"
+          type: job_template
+      - identifier: "Error Report 2"
+        job_type: run
+        unified_job_template:
+          name: "AWX Error Report"
           type: job_template
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"

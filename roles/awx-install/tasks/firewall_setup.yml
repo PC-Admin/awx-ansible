@@ -21,60 +21,60 @@
   when: ( monitor_enabled | bool ) or ( backup_enabled | bool )
 
 - name: UFW add port 22 TCP (SSH) on AWX Server
-  ufw:
+  community.general.ufw:
     rule: allow
     port: '22'
     proto: tcp
 
 - name: UFW add port 80 TCP (AWX) on AWX Server
-  ufw:
+  community.general.ufw:
     rule: allow
     port: '80'
     proto: tcp
 
 - name: UFW add port 443 TCP (AWX) on AWX Server
-  ufw:
+  community.general.ufw:
     rule: allow
     port: '443'
     proto: tcp
 
 - name: UFW add port 6443 TCP (AWX API) on AWX Server
-  ufw:
+  community.general.ufw:
     rule: allow
     port: '6443'
     proto: tcp
 
 - name: UFW add port 9090 TCP (Prometheus) on AWX Server
-  ufw:
+  community.general.ufw:
     rule: allow
     port: '9090'
     proto: tcp
   when: monitor_enabled | bool
 
 - name: UFW add port 9100 TCP (Prometheus Node Exporter) on AWX Server
-  ufw:
+  community.general.ufw:
     rule: allow
     port: '9100'
     proto: tcp
   when: monitor_enabled | bool
 
 - name: UFW default allow outgoing traffic on AWX Server
-  ufw:
+  community.general.ufw:
     policy: allow
     direction: outgoing
 
 - name: UFW default deny incoming traffic on AWX Server
-  ufw:
+  community.general.ufw:
     policy: deny
     direction: incoming
 
 - name: Enable Firewall on AWX Server
-  ufw:
+  community.general.ufw:
     state: enabled
 
 - name: UFW add port 22 TCP (SSH) on Backup Server
   delegate_to: '{{ backup_server_ip }}'
-  ufw:
+  community.general.ufw:
     rule: allow
     port: '22'
     proto: tcp
@@ -82,7 +82,7 @@
 
 - name: UFW add port 80 TCP (Grafana) on Backup Server
   delegate_to: '{{ backup_server_ip }}'
-  ufw:
+  community.general.ufw:
     rule: allow
     port: '80'
     proto: tcp
@@ -90,7 +90,7 @@
 
 - name: UFW add port 443 TCP (Grafana) on Backup Server
   delegate_to: '{{ backup_server_ip }}'
-  ufw:
+  community.general.ufw:
     rule: allow
     port: '443'
     proto: tcp
@@ -98,7 +98,7 @@
 
 - name: UFW add port 9090 TCP (Prometheus) on Backup Server
   delegate_to: '{{ backup_server_ip }}'
-  ufw:
+  community.general.ufw:
     rule: allow
     port: '9090'
     proto: tcp
@@ -106,7 +106,7 @@
 
 - name: UFW add port 9100 TCP (Prometheus Node Exporter) on Backup Server
   delegate_to: '{{ backup_server_ip }}'
-  ufw:
+  community.general.ufw:
     rule: allow
     port: '9100'
     proto: tcp
@@ -114,20 +114,20 @@
 
 - name: UFW default allow outgoing traffic on Backup Server
   delegate_to: '{{ backup_server_ip }}'
-  ufw:
+  community.general.ufw:
     policy: allow
     direction: outgoing
   when: ( monitor_enabled | bool ) or ( backup_enabled | bool )
 
 - name: UFW default deny incoming traffic on Backup Server
   delegate_to: '{{ backup_server_ip }}'
-  ufw:
+  community.general.ufw:
     policy: deny
     direction: incoming
   when: ( monitor_enabled | bool ) or ( backup_enabled | bool )
 
 - name: Enable Firewall on Backup Server
   delegate_to: '{{ backup_server_ip }}'
-  ufw:
+  community.general.ufw:
     state: enabled
   when: ( monitor_enabled | bool ) or ( backup_enabled | bool )
