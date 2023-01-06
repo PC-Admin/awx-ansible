@@ -11,8 +11,8 @@
 - debug: msg="No IP address is defined, please enter the IP address of your server."
   when: ( server_ipv4 | length == 0 ) and ( server_ipv6 | length == 0 )
 
-- meta: end_play
-  when: ( server_ipv4 | length == 0 ) and ( server_ipv6 | length == 0 )
+#- meta: end_play
+#  when: ( server_ipv4 | length == 0 ) and ( server_ipv6 | length == 0 )
 
 - name: Set server_ip_final if both IPv4 and IPv6 are defined.
   delegate_to: 127.0.0.1

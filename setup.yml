@@ -6,9 +6,9 @@
   gather_facts: no
 
   roles:
-    #- awx-provision
+    - provision
     - awx-install
     - awx-custom-config
     - awx-backup
     - awx-monitor
-    - awx-backup-rehearsal
+    - backup-rehearsal

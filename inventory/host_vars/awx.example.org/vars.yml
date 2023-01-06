@@ -36,13 +36,22 @@ backup_awx_schedule_start: '20200101T000000'  # Borgbackup Job Template Schedule
 backup_awx_schedule_frequency: 'HOURLY'
 backup_awx_schedule_interval: 1
 
-# Backup Rehearsal Settings
-backup_rehearsal_enabled: false
-new_awx_url: awxnew.example.org
-
 # Monitor Settings
 monitor_enabled: false
 grafana_url: grafana.example.org                    # URL of the Grafana service
 grafana_com_username: << grafana.com username >>
 grafana_com_token: << grafana.com API token >>
 #grafana_admin_default_password: admin
+
+# Backup Rehearsal Settings
+backup_rehearsal_enabled: false
+new_awx_url: awxnew.example.org
+do_droplet_name: awxnew.example.org
+do_droplet_region: sgp1
+new_slug_size: s-4vcpu-8gb
+swap_size: "4G"
+do_image: ubuntu-22-04-x64
+cloudflare_email: example@email.com
+cloudflare_zone_name: example.org
+ssh_key_file_public: ~/.ssh/testing_2022.pub
+ssh_key_file_private: ~/.ssh/testing_2022
