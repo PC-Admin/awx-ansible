@@ -1,5 +1,5 @@
 ---
-roles:
+roles: []
 
 collections:
   - name: community.general.ufw
