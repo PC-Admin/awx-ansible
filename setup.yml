@@ -10,3 +10,4 @@
     - awx-custom-config
     - awx-backup
     - awx-monitor
+    - awx-backup-rehearsal

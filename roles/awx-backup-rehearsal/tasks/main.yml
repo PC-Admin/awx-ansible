@@ -1,0 +1,5 @@
+
+# AWX configure backup rehearsal
+- import_tasks: "{{ role_path }}/tasks/backup_rehearsal.yml"
+  when: backup_rehearsal_enabled | bool
+  tags: [ 'never', 'backup-rehearsal' ]

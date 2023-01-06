@@ -17,8 +17,8 @@
   tags: [ 'never', 'setup' ]
 
 # Setup the systems Firewall with UFW
-#- import_tasks: "{{ role_path }}/tasks/firewall_setup.yml"
-#  tags: [ 'never', 'setup-firewall']
+- import_tasks: "{{ role_path }}/tasks/firewall_setup.yml"
+  tags: [ 'never', 'setup-firewall']
 
 # Deploy Rancher for Kubernetes management
 - import_tasks: "{{ role_path }}/tasks/rancher_setup.yml"

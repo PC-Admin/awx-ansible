@@ -143,6 +143,14 @@
     group: borg
     mode: '0600'
 
+- name: Update 'AWX Ansible' project
+  awx.awx.tower_project_update:
+    name: "AWX Ansible"
+    timeout: 300
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes
+
 - name: Create 'AWX Backup [Borgmatic]' job template
   awx.awx.tower_job_template:
     name: "AWX Backup [Borgmatic]"
@@ -151,22 +159,6 @@
     inventory: "AWX Server"
     project: "AWX Ansible"
     playbook: "playbooks/backup.yml"
-    credentials: [ "AWX SSH Key", "Borgmatic Password" ]
-    extra_vars: { awx_url: "{{ awx_url }}", BORG_PASSPHRASE: "{{ backup_passphrase }}", ansible_user: "borg" }
-    state: present
-    verbosity: 1
-    tower_host: "https://{{ awx_url }}"
-    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: yes
-
-- name: Create 'AWX Recover [Borgmatic]' job template
-  awx.awx.tower_job_template:
-    name: "AWX Recover [Borgmatic]"
-    description: "Recovers a borg backup of local dumps to the target AWX server."
-    job_type: run
-    inventory: "AWX Server"
-    project: "AWX Ansible"
-    playbook: "playbooks/restore_borg.yml"
     credentials: [ "AWX SSH Key", "Borgmatic Password" ]
     extra_vars: { awx_url: "{{ awx_url }}", BORG_PASSPHRASE: "{{ backup_passphrase }}", ansible_user: "borg" }
     state: present

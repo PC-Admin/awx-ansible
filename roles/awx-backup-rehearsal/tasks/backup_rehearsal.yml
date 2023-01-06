@@ -1,0 +1,100 @@
+---
+
+- name: Copy tokens.yml file to local machine
+  ansible.builtin.fetch:
+    src: /data/projects/awx/tokens.yml
+    dest: /tmp/tokens.yml
+    flat: yes
+
+- name: Include AWX/Automation Controller master token from awx_tokens.yml
+  include_vars:
+    file: /tmp/tokens.yml
+  no_log: True
+
+- name: Create a AWX session token for executing AWX modules
+  awx.awx.tower_token:
+    description: 'AWX Session Token'
+    scope: "write"
+    state: present
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ master_token }}"
+    validate_certs: yes
+  register: awx_session_token
+
+- name: Create 'AWX Recover [Borgmatic]' job template
+  awx.awx.tower_job_template:
+    name: "AWX Recover [Borgmatic]"
+    description: "Recovers a borg backup of local dumps to the target AWX server."
+    job_type: run
+    inventory: "AWX Server"
+    project: "AWX Ansible"
+    playbook: "playbooks/restore_borg.yml"
+    credentials: [ "AWX SSH Key", "Borgmatic Password" ]
+    extra_vars: { awx_url: "{{ awx_url }}", BORG_PASSPHRASE: "{{ backup_passphrase }}", ansible_user: "borg" }
+    state: present
+    verbosity: 1
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes
+
+- name: Create 'AWX Recover [Local Dump]' job template
+  awx.awx.tower_job_template:
+    name: "AWX Recover [Local Dump]"
+    description: "Backs up the AWX host system, dumping a snapshot of it to the local disk."
+    job_type: run
+    inventory: "Localhost"
+    project: "AWX Ansible"
+    playbook: playbooks/restore_local.yml
+    state: present
+    verbosity: 1
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes
+
+- name: Create 'Deploy an AWX Server' job template
+  awx.awx.tower_job_template:
+    name: "Deploy an AWX Server"
+    description: "Creates another AWX server with your existing AWX server."
+    job_type: run
+    inventory: "{{ org_name }}"
+    project: "AWX Ansible"
+    playbook: setup.yml
+    ask_extra_vars: no
+    #survey_enabled: true
+    #survey_spec: "{{ lookup('file', '{{ role_path }}/surveys/update_all.json') }}"
+    job_tags: provision, setup, setup-firewall, master-token, configure-awx
+    state: present
+    verbosity: 1
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes
+
+- name: Collect timezone of AWX server (Debian and derivatives only)
+  command: cat /etc/timezone
+  register: timezone_output
+
+- name: Create an rrule string for the 'Deploy an AWX Server'
+  set_fact:
+    rrule_line_update: "DTSTART;TZID={{ timezone_output.stdout }}:{{ update_schedule_start }} RRULE:FREQ={{ update_schedule_frequency }};INTERVAL={{ update_schedule_interval }}"
+
+- name: Build a schedule for 'Deploy an AWX Server' job template
+  awx.awx.tower_schedule:
+    name: "Deploy AWX Server"
+    enabled: yes
+    state: present
+    unified_job_template: "Deploy an AWX Server"
+    extra_data: "{{ lookup('file', '{{ role_path }}/extra-vars/update_all.json') }}"
+    rrule: "{{ rrule_line_update }}"
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes
+
+- name: Delete the AWX session token for executing modules
+  awx.awx.tower_token:
+    description: 'AWX Session Token'
+    scope: "write"
+    state: absent
+    existing_token_id: "{{ awx_session_token.ansible_facts.tower_token.id }}"
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes

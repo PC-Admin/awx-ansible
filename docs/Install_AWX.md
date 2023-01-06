@@ -42,3 +42,10 @@ Record each hosts variables into each hosts ./inventory/host_vars/example.org/va
 `$ ansible-playbook -v -i ./inventory/hosts -t "setup,setup-firewall,master-token,configure-awx,setup-rancher,setup-backup,setup-monitor" setup.yml`
 
 NOTE: If using the monitor for the first time, you need to immediately go to your {{ grafana_url }} and set the initial administrator password manually.
+
+
+## Backup Rehearsal Demo
+
+1) Run with the 'backup-rehearsal' tag:
+
+`$ ansible-playbook -v -i ./inventory/hosts -t "backup-rehearsal" setup.yml`
