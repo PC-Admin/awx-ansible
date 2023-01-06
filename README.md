@@ -1,14 +1,14 @@
 # AWX Ansible
 
-This playbook spawns a ready-to-use AWX system on K3S, on a Debian 11 or Ubuntu 22.04 host.
-AWX is a tool that can be used to manage multiple servers with Ansible.
+This playbook spawns a ready-to-use AWX system and Rancher on K3S, on a Debian 11 or Ubuntu 22.04 host.
+Backup and recovery is automated by ansible between the AWX server and the Backup/Monitor server.
 
 It can optionally install:
 - [Rancher](https://www.rancher.com/), a management tool for Kubernetes/K3S.
 - [Grafana](https://grafana.com/), an open source analytics & monitoring solution.
 - [BorgBackup](https://www.borgbackup.org/), A deduplicating backup system with compression and encryption.
 
-
+AWX is a tool that can be used to manage multiple servers with Ansible.
 Ideally this system can manage the updates, configuration, backups and monitoring of many servers/services on its own. 
 
 
