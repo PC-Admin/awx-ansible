@@ -1,0 +1,10 @@
+---
+
+- name: "Emails a failed jobs output to the administrator."
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: "Hello world!"
+      debug:
+        msg: "Hello world!"

@@ -34,8 +34,8 @@
 - name: Create borg user on AWX server
   ansible.builtin.user:
     name: borg
-    shell: /bin/bash
-    #shell: /bin/rbash
+    #shell: /bin/bash
+    shell: /bin/rbash
     password: '!'
 
 - name: Create borg user on Backup server
@@ -228,6 +228,22 @@
     playbook: playbooks/backups_list.yml
     credential: "AWX SSH Key"
     extra_vars: { awx_url: "{{ awx_url }}", backup_server_ip: "{{ backup_server_ip }}", BORG_PASSPHRASE: "{{ backup_passphrase }}", ansible_user: "borg" }
+    state: present
+    verbosity: 1
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes
+
+- name: Create 'AWX Error Report' job template
+  awx.awx.tower_job_template:
+    name: "AWX Error Report"
+    description: "Emails a failed jobs output to the administrator."
+    job_type: run
+    inventory: "AWX Server"
+    project: "AWX Ansible"
+    playbook: playbooks/error_report.yml
+    credential: "AWX SSH Key"
+    #extra_vars: { awx_url: "{{ awx_url }}", backup_server_ip: "{{ backup_server_ip }}", BORG_PASSPHRASE: "{{ backup_passphrase }}", ansible_user: "borg" }
     state: present
     verbosity: 1
     tower_host: "https://{{ awx_url }}"
