@@ -9,6 +9,19 @@
       debug:
         msg: "Hello world!"
 
+    - name: List failed jobs for the testing.yml playbook
+      job_list:
+        status: failed
+        #query: {"playbook": "testing.yml"}
+        tower_host: "https://{{ awx_url }}"
+        tower_oauthtoken: "{{ awx_token }}"
+        validate_certs: yes
+      register: failed_jobs
+
+    - name: "Failed jobs"
+      debug:
+        msg: "{{ failed_jobs }}"
+
     - name: Send email using Mailgun API
       command: |
           curl -s --user 'api:{{ mailgun_api_token }}' \

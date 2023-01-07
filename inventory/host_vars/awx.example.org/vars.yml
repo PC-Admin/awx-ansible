@@ -12,6 +12,7 @@ admin_username: admin
 admin_password: << strong-password >> # AWX admin user password.
 secret_key: << strong-password >>     # AWX secrets password.
 pg_password: << strong-password >>    # AWX database password.
+self_signed_certs: false
 
 # Deploy All Settings
 update_schedule_start: '20210101T000000'
@@ -42,6 +43,11 @@ grafana_url: grafana.example.org                    # URL of the Grafana service
 grafana_com_username: << grafana.com username >>
 grafana_com_token: << grafana.com API token >>
 #grafana_admin_default_password: admin
+
+# Error Reporting Settings
+mailgun_enabled: true
+mailgun_api_token: << Mailgun API Token >>
+mailgun_domain_name: mg.example.org
 
 # Backup Rehearsal Settings
 backup_rehearsal_enabled: false
