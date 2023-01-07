@@ -20,6 +20,7 @@ To configure and install this AWX setup on your own server, follow the [Install_
 ## To Do
 
 - Automate routine recovery testing for the AWX setup [in progress]
+- Allow for self-signed certs (opt-out of letsencrypt) [in progress]
 - Get Apache onto docker too? []
 - Add email alerts for system issues []
 

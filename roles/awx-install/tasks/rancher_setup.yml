@@ -46,6 +46,17 @@
         --set ingress.tls.source=letsEncrypt \
         --set letsEncrypt.email={{ certbot_email }} \
         --kubeconfig /etc/rancher/k3s/k3s.yaml
+  when: not self_signed_certs | bool
+
+- name: Deploy the stable Rancher
+  ansible.builtin.shell: |
+      /snap/bin/helm install rancher rancher-stable/rancher \
+        --namespace cattle-system \
+        --set hostname={{ rancher_url }} \
+        --set bootstrapPassword={{ rancher_password }} \
+        --set ingress.tls.source=rancher \
+        --kubeconfig /etc/rancher/k3s/k3s.yaml
+  when: self_signed_certs | bool
 
 # Setup rancher on another server with docker is one solution! (could also house backups/monitoring)
 

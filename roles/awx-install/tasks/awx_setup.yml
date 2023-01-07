@@ -72,10 +72,12 @@
     url: https://github.com/cert-manager/cert-manager/releases/download/v1.10.1/cert-manager.yaml
     dest: /root/cert-manager/
     checksum: sha256:be169fc5333a80c5c4e272f1603ab65361636e27ed513a1ae2c701f93893c0fc
+#  when: not self_signed_certs | bool
 
 - name: Apply cert-manager.yaml manifest
   ansible.builtin.command: |
       kubectl apply -f /root/cert-manager/cert-manager.yaml
+#  when: not self_signed_certs | bool
 
 - name: Check the cert-manager API until it's ready (max 10min)
   ansible.builtin.command: |
@@ -84,14 +86,25 @@
   until: result.stdout.find("The cert-manager API is ready") != -1
   retries: 20
   delay: 30
+  when: not self_signed_certs | bool
 
-- name: Template issuer.yaml
+- name: Template issuer.yaml (letsencrypt)
   ansible.builtin.template:
-    src: '{{ role_path }}/templates/issuer.yaml.j2'
+    src: '{{ role_path }}/templates/issuer-letsencrypt.yaml.j2'
     dest: /root/awx-on-k3s-1.1.0/acme/issuer.yaml
     owner: root
     group: root
     mode: '0640'
+  when: not self_signed_certs | bool
+
+- name: Template issuer.yaml (self-signed certs)
+  ansible.builtin.template:
+    src: '{{ role_path }}/templates/issuer-selfsigned.yaml.j2'
+    dest: /root/awx-on-k3s-1.1.0/acme/issuer.yaml
+    owner: root
+    group: root
+    mode: '0640'
+  when: self_signed_certs | bool
 
 - name: Deploy the issuer
   ansible.builtin.command: |

@@ -21,8 +21,12 @@
 #    grafana_password: "{{ grafana_admin_default_password }}"
 
 - name: Collect AWX Servers public IP
+  community.general.ipify_facts:
+  #register: public_ip
+
+- name: Collect AWX Servers public IP
   set_fact:
-    awx_public_ip: "{{ ansible_eth0.ipv4.address }}"
+    awx_public_ip: "{{ ansible_facts.ipify_public_ip }}"
 
 - name: Create AWX Prometheus datasource
   community.grafana.grafana_datasource:

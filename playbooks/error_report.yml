@@ -8,3 +8,12 @@
     - name: "Hello world!"
       debug:
         msg: "Hello world!"
+
+    - name: Send email using Mailgun API
+      command: |
+          curl -s --user 'api:{{ mailgun_api_token }}' \
+          https://api.mailgun.net/v3/{{ mailgun_domain_name }}/messages \
+          -F from='Mailgun Sandbox <postmaster@{{ mailgun_domain_name }}>' \
+          -F to='Michael Collins <perthchat@protonmail.com>' \
+          -F subject='Hello Michael Collins' \
+          -F text='Congratulations Michael Collins, you just sent an email with Mailgun! You are truly awesome!'
