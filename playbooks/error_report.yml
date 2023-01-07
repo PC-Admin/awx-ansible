@@ -10,7 +10,7 @@
         msg: "Hello world!"
 
     - name: List failed jobs for the testing.yml playbook
-      job_list:
+      awx.awx.tower_job_list:
         status: failed
         #query: {"playbook": "testing.yml"}
         tower_host: "https://{{ awx_url }}"
