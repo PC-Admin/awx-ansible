@@ -59,6 +59,20 @@
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes
 
+#- name: Add machine credential
+#  awx.awx.credential:
+#    name: "AWX SSH Key"
+#    description: "The SSH key for AWX to connect to its own host OS."
+#    organization: "{{ org_name }}"
+#    credential_type: Machine
+#    state: present
+#    inputs:
+#      ssh_key_unlock: "{{ awx_ssh_key_password }}"
+#      ssh_key_data: "{{ lookup('file', '{{ awx_ssh_key }}') }}"
+#    tower_host: "https://{{ awx_url }}"
+#    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+#    validate_certs: yes
+
 - name: Create 'Deploy an AWX Server' job template
   awx.awx.tower_job_template:
     name: "Deploy an AWX Server"
@@ -67,7 +81,7 @@
     inventory: "{{ org_name }}"
     project: "AWX Ansible"
     playbook: setup.yml
-    ask_extra_vars: no
+    ask_extra_vars: yes
     #survey_enabled: true
     #survey_spec: "{{ lookup('file', '{{ role_path }}/surveys/update_all.json') }}"
     job_tags: provision, setup, setup-firewall, master-token, configure-awx

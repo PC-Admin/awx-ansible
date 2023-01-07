@@ -42,7 +42,8 @@
 
 - name: Create a new Master token using username/password
   awx.awx.token:
-    description: 'Master Token {{ ansible_date_time }}'
+    description: |
+        Master Token "{{ lookup('pipe', 'date +%Y-%m-%d@$H:%M:%S') }}"
     scope: "write"
     state: present
     controller_host: "https://{{ awx_url }}"

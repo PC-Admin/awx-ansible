@@ -25,5 +25,5 @@
   tags: [ 'never', 'configure-awx' ]
 
 # AWX configure job schedules
-- import_tasks: "{{ role_path }}/tasks/schedules_awx.yml"
-  tags: [ 'never', 'configure-awx' ]
+#- import_tasks: "{{ role_path }}/tasks/schedules_awx.yml"
+#  tags: [ 'never', 'configure-awx' ]
