@@ -109,3 +109,19 @@
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes
+
+- name: Set the value of AWX_ROLES_ENABLED
+  awx.awx.settings:
+    name: "AWX_ROLES_ENABLED"
+    value: true
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes
+
+- name: Set the value of AWX_COLLECTIONS_ENABLED
+  awx.awx.settings:
+    name: "AWX_COLLECTIONS_ENABLED"
+    value: true
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes
