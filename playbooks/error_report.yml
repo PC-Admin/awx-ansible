@@ -2,31 +2,34 @@
 
 - name: "Emails a failed jobs output to the administrator."
   hosts: localhost
+  connection: local
   gather_facts: false
 
+  collections:
+    - community.general
+
   tasks:
-    - name: "Hello world!"
-      debug:
-        msg: "Hello world!"
+    - name: Collect the id of the last failed job
+      command: |
+          curl -H "Authorization: Bearer {{ awx_token }}" -kX GET 'https://{{ awx_url }}/api/v2/job_templates/?status=failed'
+      register: job_details
 
-    - name: List failed jobs for the testing.yml playbook
-      awx.awx.tower_job_list:
-        status: failed
-        #query: {"playbook": "testing.yml"}
-        tower_host: "https://{{ awx_url }}"
-        tower_oauthtoken: "{{ awx_token }}"
-        validate_certs: yes
-      register: failed_jobs
+    - name: Set facts for job id, status etc
+      set_fact:
+        job_id: "{{ job_details.stdout | json_query('results[0].summary_fields.recent_jobs[0].id') }}"
+        job_finished: "{{ job_details.stdout | json_query('results[0].summary_fields.recent_jobs[0].finished') }}"
+#| regex_replace('\"', \"'\")  }}"
 
-    - name: "Failed jobs"
-      debug:
-        msg: "{{ failed_jobs }}"
+    - name: Collect the output of that job
+      command: |
+          curl -H "Authorization: Bearer {{ awx_token }}" -kX GET 'https://{{ awx_url }}/api/v2/jobs/169/stdout/?format=txt'
+      register: job_output
 
     - name: Send email using Mailgun API
       command: |
           curl -s --user 'api:{{ mailgun_api_token }}' \
           https://api.mailgun.net/v3/{{ mailgun_domain_name }}/messages \
-          -F from='Mailgun Sandbox <postmaster@{{ mailgun_domain_name }}>' \
-          -F to='Michael Collins <perthchat@protonmail.com>' \
-          -F subject='Hello Michael Collins' \
-          -F text='Congratulations Michael Collins, you just sent an email with Mailgun! You are truly awesome!'
+          -F from='AWX Error Report <error@{{ mailgun_domain_name }}>' \
+          -F to='<{{ admin_email }}>' \
+          -F subject='AWX Error Report' \
+          -F text='An AWX job has failed. Job ID: {{ job_id }} Job finished: {{ job_finished }} Job output: {{ job_output.stdout |replace('\"',"\'") }}'

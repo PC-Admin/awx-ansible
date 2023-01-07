@@ -176,7 +176,7 @@
     project: "AWX Ansible"
     playbook: playbooks/error_report.yml
     credential: "AWX SSH Key"
-    extra_vars: { awx_url: "{{ awx_url }}", awx_token: "{{ awx_session_token.ansible_facts.tower_token.token }}", mailgun_api_token: "{{ mailgun_api_token }}", mailgun_domain_name: "{{ mailgun_domain_name }}" }
+    extra_vars: { awx_url: "{{ awx_url }}", awx_token: "{{ master_token }}", mailgun_api_token: "{{ mailgun_api_token }}", mailgun_domain_name: "{{ mailgun_domain_name }}" }
     state: present
     verbosity: 1
     tower_host: "https://{{ awx_url }}"
