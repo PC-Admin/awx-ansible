@@ -4,6 +4,7 @@
   awx.awx.tower_organization:
     name: "{{ org_name }}"
     description: "The main organisation that is used to manage other organisations."
+    galaxy_credentials: "Ansible Galaxy"
     state: present
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"

@@ -82,7 +82,6 @@
     project: "AWX Ansible"
     playbook: setup.yml
     ask_extra_vars: yes
-    use_fact_cache: false
     #survey_enabled: true
     #survey_spec: "{{ lookup('file', '{{ role_path }}/surveys/update_all.json') }}"
     job_tags: provision, setup, setup-firewall, master-token, configure-awx

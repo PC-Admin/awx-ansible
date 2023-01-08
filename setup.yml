@@ -3,7 +3,7 @@
 - name: "Setup for the AWX/Automation Controller system."
   hosts: "{{ 'awx_servers' }}"
   #become: true
-  #gather_facts: no
+  gather_facts: no
 
   roles:
     - provision
