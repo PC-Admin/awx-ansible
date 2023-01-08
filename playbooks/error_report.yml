@@ -14,22 +14,35 @@
           curl -H "Authorization: Bearer {{ awx_token }}" -kX GET 'https://{{ awx_url }}/api/v2/job_templates/?status=failed'
       register: job_details
 
-    - name: Set facts for job id, status etc
-      set_fact:
-        job_id: "{{ job_details.stdout | json_query('results[0].summary_fields.recent_jobs[0].id') }}"
-        job_finished: "{{ job_details.stdout | json_query('results[0].summary_fields.recent_jobs[0].finished') }}"
-#| regex_replace('\"', \"'\")  }}"
-
     - name: Collect the output of that job
       command: |
           curl -H "Authorization: Bearer {{ awx_token }}" -kX GET 'https://{{ awx_url }}/api/v2/jobs/169/stdout/?format=txt'
       register: job_output
 
+    - name: Set facts for job id, status, output etc
+      set_fact:
+        job_id: "{{ job_details.stdout | from_json | json_query('results[0].summary_fields.recent_jobs[0].id') }}"
+        job_finished: "{{ job_details.stdout | from_json | json_query('results[0].summary_fields.recent_jobs[0].finished') }}"
+        job_error: "{{ job_output.stdout | replace('\"','') }}"
+
+    - name: Send email using Mailgun API
+      uri:
+        url: "https://api.mailgun.net/v3/{{ mailgun_domain_name }}/messages"
+        method: POST
+        user: "api:{{ mailgun_api_token }}"
+        body: "from='AWX Error Report <mailgun@{{ mailgun_domain_name }}>'&to='<{{ admin_email }}>'&subject='AWX Error Report'&text='An AWX job has failed. Job ID: {{ job_id }} Job finished: {{ job_finished }} Job output: job_error'"
+        #headers:
+        #  api: "{{ mailgun_api_token }}"
+        force_basic_auth: yes
+      ignore_errors: true
+
     - name: Send email using Mailgun API
       command: |
           curl -s --user 'api:{{ mailgun_api_token }}' \
           https://api.mailgun.net/v3/{{ mailgun_domain_name }}/messages \
-          -F from='AWX Error Report <error@{{ mailgun_domain_name }}>' \
-          -F to='<{{ admin_email }}>' \
+          -F from='AWX Error Report <mailgun@{{ mailgun_domain_name }}>' \
+          -F to={{ admin_email }} \
           -F subject='AWX Error Report' \
-          -F text='An AWX job has failed. Job ID: {{ job_id }} Job finished: {{ job_finished }} Job output: {{ job_output.stdout |replace('\"',"\'") }}'
+          -F text='"An AWX job has failed. Job ID: {{ job_id }} Job finished: {{ job_finished }} Visit this URL to view the failed job: https://{{ awx_url }}/#/jobs/playbook/{{ job_id }}/output"'
+
+# Job output: {{ job_error }}
