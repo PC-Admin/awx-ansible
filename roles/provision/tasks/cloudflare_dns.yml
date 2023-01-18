@@ -19,3 +19,7 @@
   ansible.builtin.debug:
     msg: Record IPv4 - {{ record_ipv4 }}
   when: ( server_ipv4 | length > 0 )
+
+- name: Pause for 2 minutes to let CloudFlares DNS propagate
+  ansible.builtin.pause:
+    minutes: 2
