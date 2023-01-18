@@ -14,7 +14,11 @@ Ideally this system can manage the updates, configuration, backups and monitorin
 
 ## Previews
 
+![awx-backup](https://user-images.githubusercontent.com/29645145/213112337-e79c990a-909a-454d-91ae-ee23353478c8.jpg)
 
+![grafana](https://user-images.githubusercontent.com/29645145/213112347-4ef31b10-5621-43e9-b6fd-a05b17e9c8a2.jpg)
+
+![rancher](https://user-images.githubusercontent.com/29645145/213112353-7ab20285-2ca1-44ed-8da4-ea044b8fa5a4.jpg)
 
 
 ## Installation
