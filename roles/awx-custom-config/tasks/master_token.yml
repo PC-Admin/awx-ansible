@@ -51,10 +51,11 @@
     controller_password: "{{ admin_password }}"
     validate_certs: false
   register: awx_token
+  no_log: true
 
-- name: debug
-  debug:
-    msg: "{{ awx_token.ansible_facts.tower_token.token }}"
+#- name: debug
+#  debug:
+#    msg: "{{ awx_token.ansible_facts.tower_token.token }}"
 
 - name: Add master_token line to tokens.yml file
   ansible.builtin.lineinfile:
@@ -67,7 +68,7 @@
   with_dict:
 #    'master_token': '{{ awx_token.token }}'
     'master_token': '{{ awx_token.ansible_facts.tower_token.token }}'
-#  no_log: True
+  no_log: true
 
 - name: Add master_token_id line to tokens.yml file
   ansible.builtin.lineinfile:

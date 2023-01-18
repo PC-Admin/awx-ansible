@@ -59,57 +59,113 @@
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes
 
-#- name: Add machine credential
-#  awx.awx.credential:
-#    name: "AWX SSH Key"
-#    description: "The SSH key for AWX to connect to its own host OS."
-#    organization: "{{ org_name }}"
-#    credential_type: Machine
-#    state: present
-#    inputs:
-#      ssh_key_unlock: "{{ awx_ssh_key_password }}"
-#      ssh_key_data: "{{ lookup('file', '{{ awx_ssh_key }}') }}"
-#    tower_host: "https://{{ awx_url }}"
-#    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-#    validate_certs: yes
+- name: Add machine credential
+  awx.awx.credential:
+    name: "AWX Root Key"
+    description: "The SSH key for AWX to connect to another instance of itself."
+    organization: "{{ org_name }}"
+    credential_type: Machine
+    state: present
+    inputs:
+      ssh_key_unlock: "{{ ssh_key_file_password }}"
+      ssh_key_data: "{{ lookup('file', '{{ ssh_key_file_private }}') }}"
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes
 
-- name: Create 'Deploy an AWX Server' job template
+- name: Create 'Deploy an AWX Server (1/2)' job template
   awx.awx.tower_job_template:
-    name: "Deploy an AWX Server"
+    name: "Deploy an AWX Server (1/2)"
     description: "Creates another AWX server with your existing AWX server."
     job_type: run
     inventory: "{{ org_name }}"
     project: "AWX Ansible"
     playbook: setup.yml
     ask_extra_vars: yes
-    #survey_enabled: true
-    #survey_spec: "{{ lookup('file', '{{ role_path }}/surveys/update_all.json') }}"
-    job_tags: provision, setup, setup-firewall, master-token, configure-awx
+    credential: "AWX Root Key"
+    job_tags: provision, setup, setup-firewall
     state: present
     verbosity: 1
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes
 
-- name: Collect timezone of AWX server (Debian and derivatives only)
-  command: cat /etc/timezone
-  register: timezone_output
-
-- name: Create an rrule string for the 'Deploy an AWX Server'
-  set_fact:
-    rrule_line_update: "DTSTART;TZID={{ timezone_output.stdout }}:{{ update_schedule_start }} RRULE:FREQ={{ update_schedule_frequency }};INTERVAL={{ update_schedule_interval }}"
-
-- name: Build a schedule for 'Deploy an AWX Server' job template
-  awx.awx.tower_schedule:
-    name: "Deploy AWX Server"
-    enabled: yes
+- name: Create 'Deploy an AWX Server (2/2)' job template
+  awx.awx.tower_job_template:
+    name: "Deploy an AWX Server (2/2)"
+    description: "Creates another AWX server with your existing AWX server."
+    job_type: run
+    inventory: "{{ org_name }}"
+    project: "AWX Ansible"
+    playbook: setup.yml
+    ask_extra_vars: yes
+    credential: "AWX Root Key"
+    job_tags: master-token, configure-awx
     state: present
-    unified_job_template: "Deploy an AWX Server"
-    extra_data: "{{ lookup('file', '{{ role_path }}/extra-vars/update_all.json') }}"
-    rrule: "{{ rrule_line_update }}"
+    verbosity: 1
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes
+
+- name: Create 'Disaster Recovery Rehearsal' workflow template
+  awx.awx.workflow_job_template:
+    name: "Disaster Recovery Rehearsal"
+    description: "Causes AWX to clone itself from its own backup, automatically provisioning the server and DNS records. It then examines if the recovered version is functional, generates a report, then deletes it."
+    workflow_nodes:
+      - identifier: "Deploy an AWX Server (1/2)"
+        job_type: run
+        unified_job_template:
+          name: "Deploy an AWX Server (1/2)"
+          type: job_template
+        related:
+          success_nodes:
+            - identifier: "Deploy an AWX Server (2/2)"
+          failure_nodes:
+            - identifier: "Error Report 0"
+          always_nodes: []
+      - identifier: "Deploy an AWX Server (2/2)"
+        job_type: run
+        unified_job_template:
+          name: "Deploy an AWX Server (2/2)"
+          type: job_template
+        related:
+          success_nodes: []
+          failure_nodes:
+            - identifier: "Error Report 1"
+          always_nodes: []
+      - identifier: "Error Report 0"
+        job_type: run
+        unified_job_template:
+          name: "AWX Error Report"
+          type: job_template
+      - identifier: "Error Report 1"
+        job_type: run
+        unified_job_template:
+          name: "AWX Error Report"
+          type: job_template
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: yes
+
+#- name: Collect timezone of AWX server (Debian and derivatives only)
+#  command: cat /etc/timezone
+#  register: timezone_output
+
+#- name: Create an rrule string for the 'Deploy an AWX Server'
+#  set_fact:
+#    rrule_line_update: "DTSTART;TZID={{ timezone_output.stdout }}:{{ update_schedule_start }} RRULE:FREQ={{ update_schedule_frequency }};INTERVAL={{ update_schedule_interval }}"
+
+#- name: Build a schedule for 'Deploy an AWX Server' job template
+#  awx.awx.tower_schedule:
+#    name: "Deploy AWX Server"
+#    enabled: yes
+#    state: present
+#    unified_job_template: "Deploy an AWX Server"
+#    extra_data: "{{ lookup('file', '{{ role_path }}/extra-vars/update_all.json') }}"
+#    rrule: "{{ rrule_line_update }}"
+#    tower_host: "https://{{ awx_url }}"
+#    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+#    validate_certs: yes
 
 - name: Add AWX host to the {{ org_name }} inventory
   awx.awx.tower_host:

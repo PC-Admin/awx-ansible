@@ -12,6 +12,11 @@ AWX is a tool that can be used to manage multiple servers with Ansible.
 Ideally this system can manage the updates, configuration, backups and monitoring of many servers/services on its own. 
 
 
+## Previews
+
+
+
+
 ## Installation
 
 To configure and install this AWX setup on your own server, follow the [Install_AWX.md in the docs/ directory](docs/Install_AWX.md).
