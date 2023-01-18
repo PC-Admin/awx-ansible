@@ -51,7 +51,7 @@
     controller_password: "{{ admin_password }}"
     validate_certs: false
   register: awx_token
-  no_log: true
+#  no_log: true
 
 #- name: debug
 #  debug:

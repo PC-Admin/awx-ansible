@@ -21,7 +21,7 @@ update_schedule_interval: 1
 
 # Repository Settings
 deploy_source: https://gitlab.com/PC-Admin/awx-ansible    # Repository of this AWX playbook
-deploy_branch: main
+deploy_branch: main                                       # The branch of this AWX playbook
 
 # Rancher settings
 rancher_enabled: false
@@ -34,7 +34,7 @@ backup_passphrase: << strong-password >>    # Borgbackup encryption passphrase
 backup_retention_days: 90                   # Borgbackup retention period
 backup_local_copies: 3                       # Number of local copies of the backup to store locally on the AWX Server
 backup_awx_schedule_start: '20200101T000000'  # Borgbackup Job Template Schedule
-backup_awx_schedule_frequency: 'HOURLY'
+backup_awx_schedule_frequency: 'HOURLY'       # Interval for backup schedule, HOURLY WEEKLY MONTHLY
 backup_awx_schedule_interval: 1
 
 # Monitor Settings
@@ -42,25 +42,24 @@ monitor_enabled: false
 grafana_url: grafana.example.org                    # URL of the Grafana service
 grafana_com_username: << grafana.com username >>
 grafana_com_token: << grafana.com API token >>
-#grafana_admin_default_password: admin
 
 # Error Reporting Settings
 mailgun_enabled: true
 mailgun_api_token: << Mailgun API Token >>
-mailgun_domain_name: mg.example.org
-admin_email: example@email.com
+mailgun_domain_name: mg.example.org             # The Mailgun domain you're configured
+admin_email: example@email.com                  # The email address error reports are sent too
 
 # Backup Rehearsal Settings
 backup_rehearsal_enabled: false
 new_awx_url: awxnew.example.org
 server_subdomains: ["awxnew"]
-do_droplet_name: awxnew.example.org
-do_droplet_region: sgp1
+do_droplet_name: awxnew.example.org             # Digitalocean droplet name
+do_droplet_region: sgp1                         # Digitalocean droplet region
 do_api_token: << DigitalOcean API Token >>
-slug_size: s-4vcpu-8gb
-swap_size: "4G"
-do_image: ubuntu-22-04-x64
-cloudflare_email: example@email.com
+slug_size: s-4vcpu-8gb                          # Digitalocean droplet size
+swap_size: "4G"                                 # Size of swap
+do_image: ubuntu-22-04-x64                      # Digitalocean image, tested on debian-11-x64 and ubuntu-22-04-x64
+cloudflare_email: example@email.com             # CloudFlare account email
 cloudflare_api_token: << Cloudflare API Token >>
 cloudflare_zone_name: example.org
 ssh_key_file_public: ~/.ssh/ssh_ed25519.pub
