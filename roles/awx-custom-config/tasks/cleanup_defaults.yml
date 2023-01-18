@@ -40,7 +40,7 @@
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Remove the default 'Demo Inventory'
   awx.awx.tower_inventory:
@@ -50,7 +50,7 @@
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Remove the default 'Demo Credential' credential
   awx.awx.tower_credential:
@@ -61,7 +61,7 @@
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Remove the default 'Default' organisation
   awx.awx.tower_organization:
@@ -70,4 +70,4 @@
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: yes
-  ignore_errors: yes
+  ignore_errors: true

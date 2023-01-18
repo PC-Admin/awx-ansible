@@ -111,34 +111,68 @@
   awx.awx.workflow_job_template:
     name: "Disaster Recovery Rehearsal"
     description: "Causes AWX to clone itself from its own backup, automatically provisioning the server and DNS records. It then examines if the recovered version is functional, generates a report, then deletes it."
+    survey_enabled: true
+    survey_spec: "{{ lookup('file', 'roles/backup-rehearsal/surveys/backup_rehearsal.json') }}"
     workflow_nodes:
-      - identifier: "Deploy an AWX Server (1/2)"
+      - identifier: "Deploy AWX Server 1"
         job_type: run
         unified_job_template:
           name: "Deploy an AWX Server (1/2)"
           type: job_template
         related:
           success_nodes:
-            - identifier: "Deploy an AWX Server (2/2)"
+            - identifier: "Deploy AWX Server 2"
           failure_nodes:
-            - identifier: "Error Report 0"
+            - identifier: "Error Report 1"
           always_nodes: []
-      - identifier: "Deploy an AWX Server (2/2)"
+      - identifier: "Deploy AWX Server 2"
         job_type: run
         unified_job_template:
           name: "Deploy an AWX Server (2/2)"
           type: job_template
         related:
+          success_nodes:
+            - identifier: "Recover Borgmatic"
+          failure_nodes:
+            - identifier: "Error Report 2"
+          always_nodes: []
+      - identifier: "Recover Borgmatic"
+        job_type: run
+        unified_job_template:
+          name: "AWX Recover [Borgmatic]"
+          type: job_template
+        related:
+          success_nodes: 
+            - identifier:	"Recover Local Dump"
+          failure_nodes:
+            - identifier: "Error Report 3"
+          always_nodes: []
+      - identifier: "Recover Local Dump"
+        job_type: run
+        unified_job_template:
+          name: "AWX Recover [Local Dump]"
+          type: job_template
+        related:
           success_nodes: []
           failure_nodes:
-            - identifier: "Error Report 1"
+            - identifier: "Error Report 4"
           always_nodes: []
-      - identifier: "Error Report 0"
+      - identifier: "Error Report 1"
         job_type: run
         unified_job_template:
           name: "AWX Error Report"
           type: job_template
-      - identifier: "Error Report 1"
+      - identifier: "Error Report 2"
+        job_type: run
+        unified_job_template:
+          name: "AWX Error Report"
+          type: job_template
+      - identifier: "Error Report 3"
+        job_type: run
+        unified_job_template:
+          name: "AWX Error Report"
+          type: job_template
+      - identifier: "Error Report 4"
         job_type: run
         unified_job_template:
           name: "AWX Error Report"

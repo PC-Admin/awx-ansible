@@ -1,0 +1,28 @@
+{
+  "name": "Borg Backup ID",
+  "description": "What is the Borg backup ID? Collect the Borg backup ID from either the backup server or AWX's 'Backup AWX [List Backups]' template. For example: awx-2022-12-27T03:02:08",
+  "spec": [
+    {
+      "question_name": "Borg Backup ID",
+      "question_description": "What is the Borg backup ID? Collect the Borg backup ID from either the backup server or AWX's 'Backup AWX [List Backups]' template. For example: awx-2022-12-27T03:02:08",
+      "required": true,
+      "min": null,
+      "max": 64,
+      "default": "awx-2022-12-27T02:02:11",
+      "new_question": true,
+      "variable": "borg_backup",
+      "type": "text"
+    },
+    {
+      "question_name": "AWX Backup Directory",
+      "question_description": "What is the AWX backup directory? Collect the local tower-openshift-backup directory name from either the above script, the server itself, or AWX's 'Backup AWX [List Backups]' template. For example: tower-openshift-backup-2022-12-24-11:43:33",
+      "required": true,
+      "min": null,
+      "max": 128,
+      "default": "tower-openshift-backup-2022-12-24-11:43:33",
+      "new_question": true,
+      "variable": "awx_backup_directory",
+      "type": "text"
+    }
+  ]
+}

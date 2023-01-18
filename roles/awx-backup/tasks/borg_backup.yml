@@ -340,7 +340,7 @@
     create: yes
 
 - name: Perform initial SSH handshake, accept the key blindly
-  become: yes
+  become: true
   become_user: borg
   ansible.builtin.command: |
       ssh -o "StrictHostKeyChecking no" {{ backup_server_ip }} exit
@@ -395,7 +395,7 @@
 
 - name: Perform borg init on backup server
   delegate_to: '{{ backup_server_ip }}'
-  become: yes
+  become: true
   become_user: borg
   shell: 'borg init --encryption=repokey {{ backup_directory }}'
   environment:
