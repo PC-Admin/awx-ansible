@@ -3,6 +3,21 @@
 - name: "Restores a Borg backup of the local dumps from the Backup Server to a target AWX system."
   hosts: localhost
   become: true
+  gather_facts: false
+
+  #vars_prompt:
+  #  - name: "backup_server_ip"
+  #    prompt: "What is the IP address of the Backup Server?"
+  #    private: no
+  #  - name: "awx_url"
+  #    prompt: "What is the URL of the new AWX Server?"
+  #    private: no
+  #  - name: "borg_backup"
+  #    prompt: "What is the name of the borg backup to restore?"
+  #    private: no
+  #  - name: "backup_passphrase"
+  #    prompt: "What is the passphrase for the Backup Server?"
+  #    private: yes
 
   tasks:
     - name: Add prerequisite packages to Backup Server
