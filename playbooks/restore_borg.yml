@@ -1,7 +1,7 @@
 ---
 
 - name: "Restores a Borg backup of the local dumps from the Backup Server to a target AWX system."
-  hosts: "{{ 'awx_servers' }}"
+  hosts: localhost
   become: true
 
   tasks:
@@ -16,6 +16,7 @@
       retries: 10
 
     - name: Add prerequisite packages to new AWX Server
+      delegate_to: '{{ new_awx_url }}'
       ansible.builtin.package:
         pkg:
         - rsync
@@ -44,6 +45,7 @@
         mode: '0755'
 
     - name: "Empty extracted directory on the new AWX Server."
+      delegate_to: '{{ new_awx_url }}'
       ansible.builtin.file:
         state: absent
         path: /home/borg/extracted
@@ -53,6 +55,7 @@
         mode: '0755'
 
     - name: "Ensure extracted directory exists on the new AWX Server."
+      delegate_to: '{{ new_awx_url }}'
       ansible.builtin.file:
         path: /home/borg/extracted
         state: directory
@@ -96,12 +99,14 @@
       register: borg_transfer_ssh_public_key
 
     - name: Create borg user on the new AWX server
+      delegate_to: '{{ new_awx_url }}'
       ansible.builtin.user:
         name: borg
         shell: /bin/bash
         password: '!'
 
     - name: Write public SSH key to authorized_keys file on the new AWX Server
+      delegate_to: '{{ new_awx_url }}'
       ansible.builtin.lineinfile:
         path: /home/borg/.ssh/authorized_keys
         regexp: '^.*Borgmatic Backup Server > New AWX Server.*$'
@@ -137,11 +142,13 @@
           rsync -av /home/borg/extracted/data/backup {{ awx_url }}:/home/borg/extracted/
 
     - name: Create a list of the new local dump files
+      delegate_to: '{{ new_awx_url }}'
       shell: |
           ls -1 /home/borg/extracted/backup/ | grep tower
       register: move_list_dumps
 
     - name: Move the local dumps to /data/backup/ on the new AWX Server
+      delegate_to: '{{ new_awx_url }}'
       ansible.builtin.copy:
         src: "/home/borg/extracted/backup/{{ item }}"
         dest: "/data/backup/"
@@ -152,6 +159,7 @@
       loop: "{{ move_list_dumps.stdout_lines }}"
 
     - name: Collect a list of available local dumps on the new AWX Server
+      delegate_to: '{{ new_awx_url }}'
       become: yes
       become_user: borg
       ansible.builtin.shell: |
