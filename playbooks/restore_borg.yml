@@ -3,6 +3,7 @@
 - name: "Restores a Borg backup of the local dumps from the Backup Server to a target AWX system."
   hosts: localhost
   #become: true
+  remote_user: root
   gather_facts: false
 
   #vars_prompt:
