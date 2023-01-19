@@ -8,7 +8,7 @@
     state: present
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: false
+    validate_certs: "{{ validate_certs }}"
 
 - name: Add admin user to their organisation
   awx.awx.tower_role:
@@ -17,7 +17,7 @@
     role: member
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: false
+    validate_certs: "{{ validate_certs }}"
 
 - name: Add organisations inventory to the admins organisation
   awx.awx.tower_inventory:
@@ -27,7 +27,7 @@
     state: present
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: false
+    validate_certs: "{{ validate_certs }}"
 
 - name: Add Localhost inventory to the admins organisation
   awx.awx.tower_inventory:
@@ -40,7 +40,7 @@
       ansible_python_interpreter: '{{ ansible_playbook_python }}'
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: false
+    validate_certs: "{{ validate_certs }}"
 
 - name: Add AWX Server inventory to the admins organisation
   awx.awx.tower_inventory:
@@ -50,7 +50,7 @@
     state: present
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: false
+    validate_certs: "{{ validate_certs }}"
 
 - name: Add organisations inventory to the admins organisation
   awx.awx.tower_inventory:
@@ -60,7 +60,7 @@
     state: present
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: false
+    validate_certs: "{{ validate_certs }}"
 
 - name: Add AWX host to the AWX Server inventory
   awx.awx.tower_host:
@@ -70,7 +70,7 @@
     state: present
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: false
+    validate_certs: "{{ validate_certs }}"
   ignore_errors: True
 
 - name: Add localhost (ee) to the Localhost inventory
@@ -81,7 +81,7 @@
     state: present
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: false
+    validate_certs: "{{ validate_certs }}"
 
 - name: Allow admin account to 'Use' the AWX Server inventory
   awx.awx.tower_role:
@@ -91,7 +91,7 @@
     state: present
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: false
+    validate_certs: "{{ validate_certs }}"
 
 - name: Allow admin account to 'Use' the Localhost inventory
   awx.awx.tower_role:
@@ -101,7 +101,7 @@
     state: present
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: false
+    validate_certs: "{{ validate_certs }}"
 
 - name: Set the value of TOWER_URL_BASE
   awx.awx.settings:
@@ -109,7 +109,7 @@
     value: "https://{{ awx_url }}"
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: false
+    validate_certs: "{{ validate_certs }}"
 
 - name: Set the value of AWX_ROLES_ENABLED
   awx.awx.settings:
@@ -117,7 +117,7 @@
     value: true
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: false
+    validate_certs: "{{ validate_certs }}"
 
 - name: Set the value of AWX_COLLECTIONS_ENABLED
   awx.awx.settings:
@@ -125,4 +125,4 @@
     value: true
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: false
+    validate_certs: "{{ validate_certs }}"

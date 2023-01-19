@@ -12,7 +12,8 @@ admin_username: admin
 admin_password: << strong-password >> # AWX admin user password.
 secret_key: << strong-password >>     # AWX secrets password.
 pg_password: << strong-password >>    # AWX database password.
-self_signed_certs: false
+self_signed_certs: false	# Whether to use self-signed certs or letsencrypt
+validate_certs: true		# Whether to validate the SSL certs on AWX when using it
 
 # Deploy All Settings
 update_schedule_start: '20210101T000000'

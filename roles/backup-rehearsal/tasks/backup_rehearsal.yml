@@ -18,7 +18,7 @@
     state: present
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ master_token }}"
-    validate_certs: false
+    validate_certs: "{{ validate_certs }}"
   register: awx_session_token
 
 - name: Update 'AWX Ansible' project
@@ -27,7 +27,7 @@
     timeout: 300
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: false
+    validate_certs: "{{ validate_certs }}"
 
 - name: Create 'AWX Recover [Borgmatic]' job template
   awx.awx.tower_job_template:
@@ -43,7 +43,7 @@
     verbosity: 1
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: false
+    validate_certs: "{{ validate_certs }}"
 
 - name: Create 'AWX Recover [Local Dump]' job template
   awx.awx.tower_job_template:
@@ -57,7 +57,7 @@
     verbosity: 1
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: false
+    validate_certs: "{{ validate_certs }}"
 
 - name: Add machine credential
   awx.awx.credential:
@@ -71,7 +71,7 @@
       ssh_key_data: "{{ lookup('file', '{{ ssh_key_file_private }}') }}"
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: false
+    validate_certs: "{{ validate_certs }}"
 
 - name: Create 'Provision AWX Server' job template
   awx.awx.tower_job_template:
@@ -88,7 +88,7 @@
     verbosity: 1
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: false
+    validate_certs: "{{ validate_certs }}"
 
 - name: Create 'Deploy AWX Server' job template
   awx.awx.tower_job_template:
@@ -105,7 +105,7 @@
     verbosity: 1
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: false
+    validate_certs: "{{ validate_certs }}"
 
 - name: Create 'Setup AWX Server' job template
   awx.awx.tower_job_template:
@@ -122,7 +122,7 @@
     verbosity: 1
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: false
+    validate_certs: "{{ validate_certs }}"
 
 - name: Create 'Disaster Recovery Rehearsal' workflow template
   awx.awx.workflow_job_template:
@@ -170,9 +170,20 @@
           name: "AWX Recover [Local Dump]"
           type: job_template
         related:
-          success_nodes: []
+          success_nodes: 
+            - identifier: "AWX Status Check"
           failure_nodes:
             - identifier: "Error Report 4"
+          always_nodes: []
+      - identifier: "AWX Status Check"
+        job_type: run
+        unified_job_template:
+          name: "AWX Status Check"
+          type: job_template
+        related:
+          success_nodes: []
+          failure_nodes:
+            - identifier: "Error Report 5"
           always_nodes: []
       - identifier: "Error Report 1"
         job_type: run
@@ -194,9 +205,86 @@
         unified_job_template:
           name: "AWX Error Report"
           type: job_template
+      - identifier: "Error Report 5"
+        job_type: run
+        unified_job_template:
+          name: "AWX Error Report"
+          type: job_template
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: false
+    validate_certs: "{{ validate_certs }}"
+
+
+- name: Create 'Disaster Recovery Rehearsal 2' workflow template
+  awx.awx.workflow_job_template:
+    name: "Disaster Recovery Rehearsal 2"
+    description: "Causes AWX to clone itself from its own backup, automatically provisioning the server and DNS records. It then examines if the recovered version is functional, generates a report, then deletes it."
+    survey_enabled: true
+    survey_spec: "{{ lookup('file', 'roles/backup-rehearsal/surveys/backup_rehearsal.json') }}"
+    workflow_nodes:
+      - identifier: "Provision AWX Server"
+        job_type: run
+        unified_job_template:
+          name: "Provision AWX Server"
+          type: job_template
+        related:
+          success_nodes:
+            - identifier: "Deploy AWX Server"
+          failure_nodes:
+            - identifier: "Error Report"
+          always_nodes: []
+      - identifier: "Deploy AWX Server"
+        job_type: run
+        unified_job_template:
+          name: "Deploy AWX Server"
+          type: job_template
+        related:
+          success_nodes:
+            - identifier: "Recover Borgmatic"
+          failure_nodes:
+            - identifier: "Error Report"
+          always_nodes: []
+      - identifier: "Recover Borgmatic"
+        job_type: run
+        unified_job_template:
+          name: "AWX Recover [Borgmatic]"
+          type: job_template
+        related:
+          success_nodes: 
+            - identifier:	"Recover Local Dump"
+          failure_nodes:
+            - identifier: "Error Report"
+          always_nodes: []
+      - identifier: "Recover Local Dump"
+        job_type: run
+        unified_job_template:
+          name: "AWX Recover [Local Dump]"
+          type: job_template
+        related:
+          success_nodes:
+            - identifier: "AWX Status Check"
+          failure_nodes:
+            - identifier: "Error Report"
+          always_nodes: []
+      - identifier: "AWX Status Check"
+        job_type: run
+        unified_job_template:
+          name: "AWX Status Check"
+          type: job_template
+        related:
+          success_nodes: []
+          failure_nodes:
+            - identifier: "Error Report"
+          always_nodes: []
+      - identifier: "Error Report"
+        job_type: run
+        unified_job_template:
+          name: "AWX Error Report"
+          type: job_template
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: "{{ validate_certs }}"
+
 
 #- name: Collect timezone of AWX server (Debian and derivatives only)
 #  command: cat /etc/timezone
@@ -216,7 +304,7 @@
 #    rrule: "{{ rrule_line_update }}"
 #    tower_host: "https://{{ awx_url }}"
 #    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-#    validate_certs: false
+#    validate_certs: "{{ validate_certs }}"
 
 - name: Add AWX host to the {{ org_name }} inventory
   awx.awx.tower_host:
@@ -226,7 +314,7 @@
     state: present
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: false
+    validate_certs: "{{ validate_certs }}"
   ignore_errors: True
 
 - name: Add group awx_servers
@@ -238,7 +326,7 @@
     state: present
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: false
+    validate_certs: "{{ validate_certs }}"
 
 - name: Delete the AWX session token for executing modules
   awx.awx.tower_token:
@@ -248,4 +336,4 @@
     existing_token_id: "{{ awx_session_token.ansible_facts.tower_token.id }}"
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: false
+    validate_certs: "{{ validate_certs }}"

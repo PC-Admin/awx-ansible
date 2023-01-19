@@ -23,7 +23,7 @@
     state: present
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ master_token }}"
-    validate_certs: false
+    validate_certs: "{{ validate_certs }}"
   register: awx_session_token
 
 - name: Remove the default 'Demo Job Template'
@@ -35,7 +35,7 @@
     state: absent
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: false
+    validate_certs: "{{ validate_certs }}"
 
 - name: Remove the default 'Demo Project'
   awx.awx.tower_project:
@@ -44,7 +44,7 @@
     state: absent
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: false
+    validate_certs: "{{ validate_certs }}"
   ignore_errors: true
 
 - name: Remove the default 'Demo Inventory'
@@ -54,7 +54,7 @@
     state: absent
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: false
+    validate_certs: "{{ validate_certs }}"
   ignore_errors: true
 
 - name: Remove the default 'Demo Credential' credential
@@ -65,7 +65,7 @@
     state: absent
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: false
+    validate_certs: "{{ validate_certs }}"
   ignore_errors: true
 
 - name: Remove the default 'Default' organisation
@@ -74,5 +74,5 @@
     state: absent
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: false
+    validate_certs: "{{ validate_certs }}"
   ignore_errors: true

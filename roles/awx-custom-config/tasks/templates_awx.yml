@@ -14,4 +14,4 @@
     verbosity: 1
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: false
+    validate_certs: "{{ validate_certs }}"

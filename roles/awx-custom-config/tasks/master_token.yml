@@ -49,7 +49,7 @@
     controller_host: "https://{{ awx_url }}"
     controller_username: "{{ admin_username }}"
     controller_password: "{{ admin_password }}"
-    validate_certs: false
+    validate_certs: "{{ validate_certs }}"
   register: awx_token
 #  no_log: true
 
