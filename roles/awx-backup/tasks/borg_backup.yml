@@ -18,7 +18,7 @@
     state: present
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ master_token }}"
-    validate_certs: yes
+    validate_certs: false
   register: awx_session_token
 
 - name: Add Backup Server host to the AWX Server inventory
@@ -29,7 +29,7 @@
     state: present
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: yes
+    validate_certs: false
 
 - name: Create borg user on AWX server
   ansible.builtin.user:
@@ -91,7 +91,7 @@
       vault_id: "awx_borg_password"
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: yes
+    validate_certs: false
 
 - name: Slurp up new borg_user private key
   ansible.builtin.slurp:
@@ -110,7 +110,7 @@
       ssh_key_data: "{{ borg_user_ssh_private_key['content'] | b64decode }}"
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: yes
+    validate_certs: false
 
 - name: Delete private borg_user SSH e25519 key
   ansible.builtin.file:
@@ -149,7 +149,7 @@
     timeout: 300
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: yes
+    validate_certs: false
 
 - name: Create 'AWX Backup [Borgmatic]' job template
   awx.awx.tower_job_template:
@@ -165,7 +165,7 @@
     verbosity: 1
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: yes
+    validate_certs: false
 
 - name: Create 'AWX Error Report' job template
   awx.awx.tower_job_template:
@@ -181,7 +181,7 @@
     verbosity: 1
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: yes
+    validate_certs: false
 
 - name: Create 'AWX Backup' workflow template
   awx.awx.workflow_job_template:
@@ -221,7 +221,7 @@
           type: job_template
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: yes
+    validate_certs: false
 
 - name: Collect timezone of AWX server (Debian and derivatives only)
   command: cat /etc/timezone
@@ -240,7 +240,7 @@
     rrule: "{{ rrule_line_backup_awx }}"
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: yes
+    validate_certs: false
 
 - name: Create 'AWX Backup [List Backups]' job template
   awx.awx.tower_job_template:
@@ -256,7 +256,7 @@
     verbosity: 1
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: yes
+    validate_certs: false
 
 - name: Delete the AWX session token for executing modules
   awx.awx.tower_token:
@@ -266,7 +266,7 @@
     existing_token_id: "{{ awx_session_token.ansible_facts.tower_token.id }}"
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: yes
+    validate_certs: false
 
 - name: Add prerequisite packages to Backup Server
   delegate_to: '{{ backup_server_ip }}'

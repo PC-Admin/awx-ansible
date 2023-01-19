@@ -18,7 +18,7 @@
     state: present
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ master_token }}"
-    validate_certs: yes
+    validate_certs: false
   register: awx_session_token
 
 - name: Add 'AWX on K3s' project to AWX admins organisation
@@ -34,7 +34,7 @@
     state: present
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: yes
+    validate_certs: false
 
 #https://github.com/kurokobo/awx-on-k3s/commit/364e9c19d0d02794e836260c1800b97415b5dde7
 
@@ -44,7 +44,7 @@
     timeout: 300
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: yes
+    validate_certs: false
 
 - name: Ensure /data/projects/ directory exists
   ansible.builtin.file:
@@ -91,7 +91,7 @@
                 memory: 100Mi
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: yes
+    validate_certs: false
 
 - name: Create 'AWX Backup [Local Dump]' job template
   awx.awx.tower_job_template:
@@ -106,7 +106,7 @@
     verbosity: 1
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: yes
+    validate_certs: false
 
 - name: Delete the AWX session token for executing modules
   awx.awx.tower_token:
@@ -116,4 +116,4 @@
     existing_token_id: "{{ awx_session_token.ansible_facts.tower_token.id }}"
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: yes
+    validate_certs: false
