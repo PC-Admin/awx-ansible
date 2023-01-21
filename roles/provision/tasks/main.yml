@@ -1,20 +1,17 @@
 
-# Add host to inventory on AWX
+# Add or remove host to inventory on AWX
 - import_tasks: "{{ role_path }}/tasks/update_awx.yml"
   when: backup_rehearsal_enabled | bool
-  #tags: [ 'never', 'provision' ]
 
-# Spawn a Server
+# Spawns or destroys a DigitalOcean Droplet
 - import_tasks: "{{ role_path }}/tasks/spawn_do_droplet.yml"
   when: backup_rehearsal_enabled | bool
-  #tags: [ 'never', 'provision' ]
 
-# Save server IPs
+# Saves server IPs
 - import_tasks: "{{ role_path }}/tasks/save_server_ips.yml"
   when: backup_rehearsal_enabled | bool
   tags: [ 'never', 'provision' ]
 
-# Create Cloudflare DNS entry
+# Creates or deletes a Cloudflare DNS entry
 - import_tasks: "{{ role_path }}/tasks/cloudflare_dns.yml"
   when: backup_rehearsal_enabled | bool
-  #tags: [ 'never', 'provision' ]

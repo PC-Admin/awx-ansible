@@ -21,7 +21,7 @@
     validate_certs: "{{ validate_certs }}"
   register: awx_session_token
 
-- name: Add the new AWX host to the {{ org_name }} inventory
+- name: Add a new AWX host to the {{ org_name }} inventory
   awx.awx.tower_host:
     name: "new{{ awx_url }}"
     description: "A new AWX Server, accessed at its URL."
@@ -32,7 +32,7 @@
     validate_certs: "{{ validate_certs }}"
   ignore_errors: True
 
-- name: Add group awx_servers
+- name: Add new host to group awx_servers
   awx.awx.tower_group:
     name: awx_servers
     description: "AWX servers."
@@ -134,7 +134,7 @@
     name: "Destroy AWX Server"
     description: "Destroys an AWX server with your existing AWX server."
     job_type: run
-    inventory: "{{ org_name }}"
+    inventory: "Localhost"
     project: "AWX Ansible"
     playbook: setup.yml
     ask_extra_vars: yes

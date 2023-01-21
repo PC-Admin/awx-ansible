@@ -9,7 +9,7 @@
     scm_url: "{{ deploy_source }}"
     scm_branch: "{{ deploy_branch }}"
     scm_delete_on_update: yes
-    scm_update_on_launch: yes
+    scm_update_on_launch: no
     state: present
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"

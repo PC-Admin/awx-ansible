@@ -41,6 +41,20 @@
       delay: 6
       retries: 10
 
+    - name: Create borg user on AWX server
+      delegate_to: '{{ awx_url }}'
+      ansible.builtin.user:
+        name: borg
+        shell: /bin/bash
+        password: '!'
+
+    - name: Create borg user on Backup server
+      delegate_to: '{{ backup_server_ip }}'
+      ansible.builtin.user:
+        name: borg
+        shell: /bin/bash
+        password: '!'
+
     - name: "Empty extracted directory on Backup Server."
       delegate_to: '{{ backup_server_ip }}'
       ansible.builtin.file:
