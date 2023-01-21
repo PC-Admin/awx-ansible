@@ -134,7 +134,7 @@
     name: "Destroy AWX Server"
     description: "Destroys an AWX server with your existing AWX server."
     job_type: run
-    inventory: "Localhost"
+    inventory: "{{ org_name }}"
     project: "AWX Ansible"
     playbook: setup.yml
     ask_extra_vars: yes
@@ -260,7 +260,8 @@
           success_nodes: []
           failure_nodes:
             - identifier: "Error Report 5"
-          always_nodes: []
+          always_nodes:
+            - identifier: "Destroy AWX Server 5"
       - identifier: "Error Report 1"
         job_type: run
         unified_job_template:
@@ -309,8 +310,7 @@
         related:
           success_nodes: []
           failure_nodes: []
-          always_nodes:
-            - identifier: "Destroy AWX Server 5"
+          always_nodes: []
       - identifier: "Destroy AWX Server 1"
         job_type: run
         unified_job_template:

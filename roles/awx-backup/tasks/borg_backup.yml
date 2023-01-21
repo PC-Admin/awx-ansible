@@ -325,8 +325,8 @@
 - name: Add SSH config entry for accessing the backup server
   ansible.builtin.blockinfile:
     path: "/home/borg/.ssh/config"
-    marker_begin: "BEGIN SSH config entry for backup server"
-    marker_end: "END SSH config entry for backup server"
+    marker_begin: "BEGIN SSH config entry for {{ awx_url }} backup transmission"
+    marker_end: "END SSH config entry for {{ awx_url }} backup transmission"
     block: |
       Host {{ backup_server_ip }}
           HostName {{ backup_server_ip }}
