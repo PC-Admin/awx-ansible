@@ -198,6 +198,15 @@
     survey_spec: "{{ lookup('file', '/tmp/backup_rehearsal.json') }}"
     extra_vars: "{{ lookup('file', '/tmp/vars.yml') | from_yaml }}"
     workflow_nodes:
+      - identifier: "SCM Update AWX Ansible"
+        unified_job_template:
+          name: "AWX Ansible"
+          type: project
+        related:
+          success_nodes:
+            - identifier: "Provision AWX Server"
+          failure_nodes: []
+          always_nodes: []
       - identifier: "Provision AWX Server"
         job_type: run
         unified_job_template:
@@ -340,6 +349,15 @@
     survey_spec: "{{ lookup('file', '/tmp/backup_rehearsal.json') }}"
     extra_vars: "{{ lookup('file', '/tmp/vars.yml') | from_yaml }}"
     workflow_nodes:
+      - identifier: "SCM Update AWX Ansible"
+        unified_job_template:
+          name: "AWX Ansible"
+          type: project
+        related:
+          success_nodes:
+            - identifier: "Provision AWX Server"
+          failure_nodes: []
+          always_nodes: []
       - identifier: "Provision AWX Server"
         job_type: run
         unified_job_template:
