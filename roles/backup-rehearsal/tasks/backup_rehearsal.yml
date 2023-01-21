@@ -78,7 +78,7 @@
     name: "Provision AWX Server"
     description: "Creates another AWX server with your existing AWX server."
     job_type: run
-    inventory: "{{ org_name }}"
+    inventory: "Localhost"
     project: "AWX Ansible"
     playbook: setup.yml
     ask_extra_vars: yes
