@@ -16,7 +16,6 @@
   delegate_to: 127.0.0.1
   awx.awx.tower_host:
     name: "{{ awx_url }}"
-    description: "A new AWX Server, accessed at its URL."
     inventory: "{{ org_name }}"
     state: absent
     tower_host: "https://{{ host_awx_url }}"

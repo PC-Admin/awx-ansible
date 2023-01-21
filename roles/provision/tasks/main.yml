@@ -7,11 +7,6 @@
 - import_tasks: "{{ role_path }}/tasks/spawn_do_droplet.yml"
   when: backup_rehearsal_enabled | bool
 
-# Saves server IPs
-- import_tasks: "{{ role_path }}/tasks/save_server_ips.yml"
-  when: backup_rehearsal_enabled | bool
-  tags: [ 'never', 'provision' ]
-
 # Creates or deletes a Cloudflare DNS entry
 - import_tasks: "{{ role_path }}/tasks/cloudflare_dns.yml"
   when: backup_rehearsal_enabled | bool
