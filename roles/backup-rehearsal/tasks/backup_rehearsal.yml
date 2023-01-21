@@ -21,6 +21,28 @@
     validate_certs: "{{ validate_certs }}"
   register: awx_session_token
 
+- name: Add the new AWX host to the {{ org_name }} inventory
+  awx.awx.tower_host:
+    name: "new{{ awx_url }}"
+    description: "A new AWX Server, accessed at its URL."
+    inventory: "{{ org_name }}"
+    state: present
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: "{{ validate_certs }}"
+  ignore_errors: True
+
+- name: Add group awx_servers
+  awx.awx.tower_group:
+    name: awx_servers
+    description: "AWX servers."
+    inventory: "{{ org_name }}"
+    hosts: "new{{ awx_url }}"
+    state: present
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: "{{ validate_certs }}"
+
 - name: Update 'AWX Ansible' project
   awx.awx.tower_project_update:
     name: "AWX Ansible"
@@ -78,7 +100,7 @@
     name: "Provision AWX Server"
     description: "Creates another AWX server with your existing AWX server."
     job_type: run
-    inventory: "Localhost"
+    inventory: "{{ org_name }}"
     project: "AWX Ansible"
     playbook: setup.yml
     ask_extra_vars: yes
