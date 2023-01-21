@@ -10,7 +10,7 @@
     account_email: '{{ cloudflare_email }}'
     account_api_token: '{{ cloudflare_api_token }}'
     state: present
-  with_items: "{{ awx_url | split('.')[0] }}"
+  with_items: "{{ awx_url | split('.') | item(0) }}"
   when: ( server_ipv4 | length > 0 )
   register: record_ipv4
   tags: [ 'never', 'provision' ]
@@ -31,7 +31,7 @@
     account_email: '{{ cloudflare_email }}'
     account_api_token: '{{ cloudflare_api_token }}'
     state: absent
-  with_items: "{{ awx_url | split('.')[0] }}"
+  with_items: "{{ awx_url | split('.') | item(0) }}"
   register: record_ipv4
   tags: [ 'never', 'deprovision' ]
 
