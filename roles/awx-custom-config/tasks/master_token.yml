@@ -41,6 +41,7 @@
 #    msg: "{{ awx_token.token }}"
 
 - name: Create a new Master token using username/password
+  delegate_to: localhost
   awx.awx.token:
     description: |
         Master Token "{{ lookup('pipe', 'date +%Y-%m-%d@$H:%M:%S') }}"

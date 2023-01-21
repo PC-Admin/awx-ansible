@@ -109,6 +109,8 @@
 - name: Deploy the issuer
   ansible.builtin.command: |
       kubectl apply -k /root/awx-on-k3s-1.1.0/acme
+  retries: 3
+  delay: 15
 
 - name: Copy base/middleware.yaml
   ansible.builtin.template:
@@ -144,13 +146,13 @@
   ansible.builtin.command: |
       kubectl apply -k /root/awx-on-k3s-1.1.0/base
 
-- name: Check if AWX/Automation Controller is deployed (max 12min)
+- name: Check if AWX/Automation Controller is deployed (max 12.5min)
   ansible.builtin.command: |
       kubectl -n awx logs --tail=10 deployments/awx-operator-controller-manager -c awx-manager
   register: result
   until: result.stdout.find("failed=0") != -1
   failed_when: result.stdout.find("failed=1") != -1
-  retries: 24
+  retries: 25
   delay: 30
 
 - name: Deploy the required AWX/Automation Controller Operator objects in the awx namespace.

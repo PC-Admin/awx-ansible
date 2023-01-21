@@ -52,9 +52,7 @@ admin_email: example@email.com                  # The email address error report
 
 # Backup Rehearsal Settings
 backup_rehearsal_enabled: false
-new_awx_url: awxnew.example.org
 server_subdomains: ["awxnew"]
-do_droplet_name: awxnew.example.org             # Digitalocean droplet name
 do_droplet_region: sgp1                         # Digitalocean droplet region
 do_api_token: << DigitalOcean API Token >>
 slug_size: s-4vcpu-8gb                          # Digitalocean droplet size

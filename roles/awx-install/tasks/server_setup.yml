@@ -1,8 +1,17 @@
 ---
 
-- name: Set server hostname to AWX / Ansible Controller URL
+- name: Set server hostname to AWX URL
   ansible.builtin.command: |
     hostnamectl set-hostname {{ awx_url }}
+
+- name: Disable all swap on AWX/Rancher server
+  ansible.builtin.command: swapoff -a
+
+#- name: Comment out swap partition in /etc/fstab
+#  ansible.builtin.lineinfile:
+#    path: /etc/fstab
+#    regexp: '^[^#].*swap.*$'
+#    line: '# {{ line }}'
 
 - name: Update repos
   ansible.builtin.package:
@@ -30,6 +39,8 @@
     - software-properties-common
     - apt-listchanges
     - make
+    - git
+    - curl
   register: package_status
   until: package_status is success
   delay: 6

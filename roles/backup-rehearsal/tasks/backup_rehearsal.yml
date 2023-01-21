@@ -124,12 +124,20 @@
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: "{{ validate_certs }}"
 
-- name: Create 'Disaster Recovery Rehearsal' workflow template
+# Template the backup_rehearsal.json
+
+- name: Template the backup_rehearsal.json file locally
+  delegate_to: localhost
+  ansible.builtin.template:
+    src: roles/backup-rehearsal/surveys/backup_rehearsal.json.j2
+    dest: /tmp/backup_rehearsal.json
+
+- name: Create 'AWX Disaster Recovery Rehearsal' workflow template
   awx.awx.workflow_job_template:
-    name: "Disaster Recovery Rehearsal"
+    name: "AWX Disaster Recovery Rehearsal"
     description: "Causes AWX to clone itself from its own backup, automatically provisioning the server and DNS records. It then examines if the recovered version is functional, generates a report, then deletes it."
     survey_enabled: true
-    survey_spec: "{{ lookup('file', 'roles/backup-rehearsal/surveys/backup_rehearsal.json') }}"
+    survey_spec: "{{ lookup('file', '/tmp/backup_rehearsal.json') }}"
     workflow_nodes:
       - identifier: "Provision AWX Server"
         job_type: run
@@ -215,12 +223,12 @@
     validate_certs: "{{ validate_certs }}"
 
 
-- name: Create 'Disaster Recovery Rehearsal 2' workflow template
+- name: Create 'AWX Disaster Recovery Rehearsal 2' workflow template
   awx.awx.workflow_job_template:
-    name: "Disaster Recovery Rehearsal 2"
+    name: "AWX Disaster Recovery Rehearsal 2"
     description: "Causes AWX to clone itself from its own backup, automatically provisioning the server and DNS records. It then examines if the recovered version is functional, generates a report, then deletes it."
     survey_enabled: true
-    survey_spec: "{{ lookup('file', 'roles/backup-rehearsal/surveys/backup_rehearsal.json') }}"
+    survey_spec: "{{ lookup('file', 'roles/backup-rehearsal/surveys/backup_rehearsal.json.j2') }}"
     workflow_nodes:
       - identifier: "Provision AWX Server"
         job_type: run
@@ -294,28 +302,27 @@
 #  set_fact:
 #    rrule_line_update: "DTSTART;TZID={{ timezone_output.stdout }}:{{ update_schedule_start }} RRULE:FREQ={{ update_schedule_frequency }};INTERVAL={{ update_schedule_interval }}"
 
-#- name: Build a schedule for 'Deploy an AWX Server' job template
+#- name: Build a schedule for 'AWX Disaster Recovery Rehearsal' workflow template
 #  awx.awx.tower_schedule:
-#    name: "Deploy AWX Server"
+#    name: "AWX Disaster Recovery Rehearsal"
 #    enabled: yes
 #    state: present
-#    unified_job_template: "Deploy an AWX Server"
-#    extra_data: "{{ lookup('file', '{{ role_path }}/extra-vars/update_all.json') }}"
+#    unified_job_template: "AWX Disaster Recovery Rehearsal"
 #    rrule: "{{ rrule_line_update }}"
 #    tower_host: "https://{{ awx_url }}"
 #    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
 #    validate_certs: "{{ validate_certs }}"
 
-- name: Add AWX host to the {{ org_name }} inventory
-  awx.awx.tower_host:
-    name: "{{ new_awx_url }}"
-    description: "A new AWX Server, accessed at its URL."
-    inventory: "{{ org_name }}"
-    state: present
-    tower_host: "https://{{ awx_url }}"
-    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: "{{ validate_certs }}"
-  ignore_errors: True
+#- name: Add AWX host to the {{ org_name }} inventory
+#  awx.awx.tower_host:
+#    name: "{{ new_awx_url }}"
+#    description: "A new AWX Server, accessed at its URL."
+#    inventory: "{{ org_name }}"
+#    state: present
+#    tower_host: "https://{{ awx_url }}"
+#    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+#    validate_certs: "{{ validate_certs }}"
+#  ignore_errors: True
 
 - name: Add group awx_servers
   awx.awx.tower_group:

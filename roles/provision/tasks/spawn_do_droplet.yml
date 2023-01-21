@@ -27,7 +27,7 @@
   delegate_to: 127.0.0.1
   community.digitalocean.digital_ocean_droplet:
     state: present
-    name: '{{ do_droplet_name }}'
+    name: '{{ awx_url }}'
     oauth_token: '{{ do_api_token }}'
     size: '{{ slug_size }}'
     ssh_keys: '{{ ssh_key_id_array }}'
