@@ -3,18 +3,14 @@
 
 - debug:
     msg: "The public SSH key to check for: {{ public_ssh_key }}"
-  tags: 
-   - 'never'
-   - 'provision'
+  tags: [ 'never', 'provision' ]
 
 - name: Collect list of DigitalOcean public SSH keys
   delegate_to: 127.0.0.1
   community.digitalocean.digital_ocean_sshkey_info:
     oauth_token: '{{ do_api_token }}'
   register: ssh_keys
-  tags: 
-   - 'never'
-   - 'provision'
+  tags: [ 'never', 'provision' ]
 
 #- debug:
 #    msg: "{{ ssh_keys }}"
@@ -25,9 +21,7 @@
     ssh_key_id_array: "{{ ssh_key_id_array }} + [ '{{ item.id }}' ]"
   when: item.public_key == public_ssh_key
   loop: "{{ ssh_keys.data|flatten(levels=1) }}"
-  tags: 
-   - 'never'
-   - 'provision'
+  tags: [ 'never', 'provision' ]
 
 #- debug:
 #    msg: "{{ ssh_key_id_array }}"
@@ -46,9 +40,7 @@
     wait: yes
     unique_name: yes
   register: new_server_info
-  tags: 
-   - 'never'
-   - 'provision'
+  tags: [ 'never', 'provision' ]
 
 - name: Deletes a Digital Ocean Droplet
   delegate_to: 127.0.0.1
@@ -59,34 +51,25 @@
     wait: yes
     unique_name: yes
   register: new_server_info
-  tags: 
-   - 'never'
-   - 'deprovision'
+  tags: [ 'never', 'deprovision' ]
 
 - debug:
     msg: "{{ new_server_info }}"
-  tags: 
-   - 'never'
-   - 'provision'
-   - 'deprovision'
+  tags: [ 'never', 'provision', 'deprovision' ]
 
 - name: Assign server IPv4 to a variable
   delegate_to: 127.0.0.1
   set_fact:
     server_ipv4: "{{ new_server_info.data.droplet.networks.v4[0].ip_address }}"
   when: new_server_info.data.droplet.networks.v4[0].type == "public"
-  tags: 
-   - 'never'
-   - 'provision'
+  tags: [ 'never', 'provision' ]
 
 - name: Assign server IPv4 to a variable
   delegate_to: 127.0.0.1
   set_fact:
     server_ipv4: "{{ new_server_info.data.droplet.networks.v4[1].ip_address }}"
   when: new_server_info.data.droplet.networks.v4[1].type == "public"
-  tags: 
-   - 'never'
-   - 'provision'
+  tags: [ 'never', 'provision' ]
 
 #- debug:
 #    msg: "{{ new_server_info.data.droplet.networks }}"
@@ -96,9 +79,7 @@
   set_fact:
     server_ipv6: "{{ new_server_info.data.droplet.networks.v6[0].ip_address }}"
   when: ( new_server_info.data.droplet.networks.v6 is defined ) and ( new_server_info.data.droplet.networks.v6 | length > 0 ) and ( new_server_info.data.droplet.networks.v6[0].type == "public" )
-  tags: 
-   - 'never'
-   - 'provision'
+  tags: [ 'never', 'provision' ]
 
 #- debug:
 #    msg: "{{ server_ipv4 }}"

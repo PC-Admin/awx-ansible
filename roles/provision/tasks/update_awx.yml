@@ -10,9 +10,7 @@
     tower_host: "https://{{ host_awx_url }}"
     tower_oauthtoken: "{{ host_awx_token }}"
     validate_certs: "{{ validate_certs }}"
-  tags: 
-   - 'never'
-   - 'provision'
+  tags: [ 'never', 'provision' ]
 
 - name: Remove the new AWX host to the {{ org_name }} inventory
   delegate_to: 127.0.0.1
@@ -24,9 +22,7 @@
     tower_host: "https://{{ host_awx_url }}"
     tower_oauthtoken: "{{ host_awx_token }}"
     validate_certs: "{{ validate_certs }}"
-  tags: 
-   - 'never'
-   - 'deprovision'
+  tags: [ 'never', 'deprovision' ]
 
 - name: Add host to group awx_servers
   delegate_to: 127.0.0.1
@@ -39,9 +35,7 @@
     tower_host: "https://{{ host_awx_url }}"
     tower_oauthtoken: "{{ host_awx_token }}"
     validate_certs: "{{ validate_certs }}"
-  tags: 
-   - 'never'
-   - 'provision'
+  tags: [ 'never', 'provision' ]
 
 - name: Remove host from group awx_servers
   delegate_to: 127.0.0.1
@@ -54,6 +48,4 @@
     tower_host: "https://{{ host_awx_url }}"
     tower_oauthtoken: "{{ host_awx_token }}"
     validate_certs: "{{ validate_certs }}"
-  tags: 
-   - 'never'
-   - 'deprovision'
+  tags: [ 'never', 'deprovision' ]

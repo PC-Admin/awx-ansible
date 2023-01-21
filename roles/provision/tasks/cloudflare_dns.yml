@@ -13,18 +13,14 @@
   with_items: "{{ server_subdomains }}"
   when: ( server_ipv4 | length > 0 )
   register: record_ipv4
-  tags: 
-   - 'never'
-   - 'provision'
+  tags: [ 'never', 'provision' ]
 
 - name: Print the new IPv4 DNS record
   delegate_to: 127.0.0.1
   ansible.builtin.debug:
     msg: Record IPv4 - {{ record_ipv4 }}
   when: ( server_ipv4 | length > 0 )
-  tags: 
-   - 'never'
-   - 'provision'
+  tags: [ 'never', 'provision' ]
 
 - name: Remove A records that points to the servers IP
   delegate_to: 127.0.0.1
@@ -37,13 +33,9 @@
     state: absent
   with_items: "{{ server_subdomains }}"
   register: record_ipv4
-  tags: 
-   - 'never'
-   - 'deprovision'
+  tags: [ 'never', 'deprovision' ]
 
 - name: Pause for 3 minutes to let CloudFlares DNS propagate
   ansible.builtin.pause:
     minutes: 3
-  tags: 
-   - 'never'
-   - 'provision'
+  tags: [ 'never', 'provision' ]
