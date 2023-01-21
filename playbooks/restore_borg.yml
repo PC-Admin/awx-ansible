@@ -23,7 +23,7 @@
   tasks:
     - name: Add prerequisite packages to Backup Server
       delegate_to: '{{ backup_server_ip }}'
-      ansible.builtin.package:
+      ansible.builtin.apt:
         pkg:
         - rsync
       register: package_status
@@ -33,7 +33,7 @@
 
     - name: Add prerequisite packages to new AWX Server
       delegate_to: '{{ awx_url }}'
-      ansible.builtin.package:
+      ansible.builtin.apt:
         pkg:
         - rsync
       register: package_status
