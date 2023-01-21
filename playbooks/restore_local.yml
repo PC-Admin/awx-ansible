@@ -1,34 +1,42 @@
 ---
 
 - name: "Restores a Borg backup of the local dumps from the Backup Server to a target AWX system."
-  hosts: "{{ 'awx_servers' }}"
-  become: true
+  hosts: localhost
+  #become: true
+  remote_user: root
+  gather_facts: false
 
   tasks:
     - name: Delete AWX instance.
+      delegate_to: '{{ awx_url }}'
       ansible.builtin.command: kubectl -n awx delete awx awx
       ignore_errors: true
 
     - name: Delete postgres PVC
+      delegate_to: '{{ awx_url }}'
       ansible.builtin.command: kubectl -n awx delete pvc postgres-13-awx-postgres-13-0
       ignore_errors: true
 
     - name: Delete postgres PV
+      delegate_to: '{{ awx_url }}'
       ansible.builtin.command: kubectl delete pv awx-postgres-13-volume
       ignore_errors: true
 
     - name: Delete any data in the PV
+      delegate_to: '{{ awx_url }}'
       ansible.builtin.file:
         path: /data/postgres-13
         state: absent
 
     - name: Create /data/postgres-13 directory if it does not exist
+      delegate_to: '{{ awx_url }}'
       ansible.builtin.file:
         path: /data/postgres-13
         state: directory
         mode: '0755'
 
     - name: Create /data/projects directory if it does not exist
+      delegate_to: '{{ awx_url }}'
       ansible.builtin.file:
         path: /data/postgres-13
         state: directory
@@ -37,23 +45,29 @@
         group: 0
 
     - name: Then deploy PV and PVC. It is recommended that making the size of PVs and PVCs same as the PVs which your AWX used when the backup was taken.
+      delegate_to: '{{ awx_url }}'
       ansible.builtin.command: |
           kubectl apply -f /root/awx-on-k3s-1.1.0/restore/pv.yaml
 
-    - name: Then deploy PV and PVC. It is recommended that making the size of PVs and PVCs same as the PVs which your AWX used when the backup was taken. 2
+    - name: Then deploy PV and PVC. It is recommended that making the size of PVs and PVCs same as the PVs which your AWX used when the backup was taken.
+      delegate_to: '{{ awx_url }}'
       ansible.builtin.command: |
           kubectl apply -f /root/awx-on-k3s-1.1.0/restore/pvc.yaml
 
     - name: Modify the name of the AWXRestore object in restore/awxrestore.yaml.
+      delegate_to: '{{ awx_url }}'
       ansible.builtin.template:
         src: './templates/awxrestore.yaml.j2'
         dest: '/root/awx-on-k3s-1.1.0/restore/awxrestore.yaml'
+      delegate_to: '{{ awx_url }}'
 
     - name: Then invoke restore by applying this manifest file
+      delegate_to: '{{ awx_url }}'
       ansible.builtin.command: |
           kubectl apply -f /root/awx-on-k3s-1.1.0/restore/awxrestore.yaml
 
     - name: Check if AWX restore completed (max 10min)
+      delegate_to: '{{ awx_url }}'
       ansible.builtin.command: |
           kubectl -n awx logs --tail=10 deployments/awx-operator-controller-manager
       register: result
@@ -63,6 +77,7 @@
       delay: 15
 
     - name: This will create AWXRestore object in the namespace, and now your AWX is restored.
+      delegate_to: '{{ awx_url }}'
       ansible.builtin.command: kubectl -n awx get awxrestore
 
     - debug:

@@ -56,7 +56,7 @@
     name: "AWX Recover [Borgmatic]"
     description: "Recovers a borg backup of local dumps to the target AWX server."
     job_type: run
-    inventory: "AWX Server"
+    inventory: "Localhost"
     project: "AWX Ansible"
     playbook: "playbooks/restore_borg.yml"
     credentials: [ "AWX SSH Key", "Borgmatic Password" ]
@@ -75,6 +75,7 @@
     inventory: "Localhost"
     project: "AWX Ansible"
     playbook: playbooks/restore_local.yml
+    extra_vars: { awx_url: "{{ awx_url }}" }
     state: present
     verbosity: 1
     tower_host: "https://{{ awx_url }}"
