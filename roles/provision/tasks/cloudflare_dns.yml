@@ -26,13 +26,6 @@
    - 'never'
    - 'provision'
 
-- name: Pause for 3 minutes to let CloudFlares DNS propagate
-  ansible.builtin.pause:
-    minutes: 3
-  tags: 
-   - 'never'
-   - 'provision'
-
 - name: Remove A records that points to the servers IP
   delegate_to: 127.0.0.1
   community.general.cloudflare_dns:
@@ -47,3 +40,10 @@
   tags: 
    - 'never'
    - 'deprovision'
+
+- name: Pause for 3 minutes to let CloudFlares DNS propagate
+  ansible.builtin.pause:
+    minutes: 3
+  tags: 
+   - 'never'
+   - 'provision'

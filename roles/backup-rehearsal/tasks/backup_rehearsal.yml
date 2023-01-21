@@ -112,23 +112,6 @@
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: "{{ validate_certs }}"
 
-- name: Create 'Destroy AWX Server' job template
-  awx.awx.tower_job_template:
-    name: "Destroy AWX Server"
-    description: "Destroys an AWX server with your existing AWX server."
-    job_type: run
-    inventory: "{{ org_name }}"
-    project: "AWX Ansible"
-    playbook: setup.yml
-    ask_extra_vars: yes
-    credential: "AWX Root Key"
-    job_tags: deprovision
-    state: present
-    verbosity: 1
-    tower_host: "https://{{ awx_url }}"
-    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: "{{ validate_certs }}"
-
 - name: Create 'Deploy AWX Server' job template
   awx.awx.tower_job_template:
     name: "Deploy AWX Server"
@@ -146,17 +129,17 @@
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: "{{ validate_certs }}"
 
-- name: Create 'Setup AWX Server' job template
+- name: Create 'Destroy AWX Server' job template
   awx.awx.tower_job_template:
-    name: "Setup AWX Server"
-    description: "Creates another AWX server with your existing AWX server."
+    name: "Destroy AWX Server"
+    description: "Destroys an AWX server with your existing AWX server."
     job_type: run
     inventory: "{{ org_name }}"
     project: "AWX Ansible"
     playbook: setup.yml
     ask_extra_vars: yes
     credential: "AWX Root Key"
-    job_tags: master-token, configure-awx
+    job_tags: deprovision
     state: present
     verbosity: 1
     tower_host: "https://{{ awx_url }}"
@@ -274,25 +257,75 @@
         unified_job_template:
           name: "AWX Error Report"
           type: job_template
+        related:
+          success_nodes: []
+          failure_nodes: []
+          always_nodes:
+            - identifier: "Destroy AWX Server 1"
       - identifier: "Error Report 2"
         job_type: run
         unified_job_template:
           name: "AWX Error Report"
           type: job_template
+        related:
+          success_nodes: []
+          failure_nodes: []
+          always_nodes:
+            - identifier: "Destroy AWX Server 2"
       - identifier: "Error Report 3"
         job_type: run
         unified_job_template:
           name: "AWX Error Report"
           type: job_template
+        related:
+          success_nodes: []
+          failure_nodes: []
+          always_nodes:
+            - identifier: "Destroy AWX Server 3"
       - identifier: "Error Report 4"
         job_type: run
         unified_job_template:
           name: "AWX Error Report"
           type: job_template
+        related:
+          success_nodes: []
+          failure_nodes: []
+          always_nodes:
+            - identifier: "Destroy AWX Server 4"
       - identifier: "Error Report 5"
         job_type: run
         unified_job_template:
           name: "AWX Error Report"
+          type: job_template
+        related:
+          success_nodes: []
+          failure_nodes: []
+          always_nodes:
+            - identifier: "Destroy AWX Server 5"
+      - identifier: "Destroy AWX Server 1"
+        job_type: run
+        unified_job_template:
+          name: "Destroy AWX Server"
+          type: job_template
+      - identifier: "Destroy AWX Server 2"
+        job_type: run
+        unified_job_template:
+          name: "Destroy AWX Server"
+          type: job_template
+      - identifier: "Destroy AWX Server 3"
+        job_type: run
+        unified_job_template:
+          name: "Destroy AWX Server"
+          type: job_template
+      - identifier: "Destroy AWX Server 4"
+        job_type: run
+        unified_job_template:
+          name: "Destroy AWX Server"
+          type: job_template
+      - identifier: "Destroy AWX Server 5"
+        job_type: run
+        unified_job_template:
+          name: "Destroy AWX Server"
           type: job_template
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
@@ -365,6 +398,16 @@
         job_type: run
         unified_job_template:
           name: "AWX Error Report"
+          type: job_template
+        related:
+          success_nodes: []
+          failure_nodes: []
+          always_nodes:
+            - identifier: "Destroy AWX Server"
+      - identifier: "Destroy AWX Server"
+        job_type: run
+        unified_job_template:
+          name: "Destroy AWX Server"
           type: job_template
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"

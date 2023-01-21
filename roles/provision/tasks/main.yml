@@ -7,7 +7,7 @@
 # Spawn a Server
 - import_tasks: "{{ role_path }}/tasks/spawn_do_droplet.yml"
   when: backup_rehearsal_enabled | bool
-  tags: [ 'never', 'provision' ]
+  #tags: [ 'never', 'provision' ]
 
 # Save server IPs
 - import_tasks: "{{ role_path }}/tasks/save_server_ips.yml"
@@ -17,4 +17,4 @@
 # Create Cloudflare DNS entry
 - import_tasks: "{{ role_path }}/tasks/cloudflare_dns.yml"
   when: backup_rehearsal_enabled | bool
-  tags: [ 'never', 'provision' ]
+  #tags: [ 'never', 'provision' ]

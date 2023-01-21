@@ -10,7 +10,9 @@
     tower_host: "https://{{ host_awx_url }}"
     tower_oauthtoken: "{{ host_awx_token }}"
     validate_certs: "{{ validate_certs }}"
-  ignore_errors: True
+  tags: 
+   - 'never'
+   - 'provision'
 
 - name: Add group awx_servers
   delegate_to: 127.0.0.1
@@ -23,3 +25,6 @@
     tower_host: "https://{{ host_awx_url }}"
     tower_oauthtoken: "{{ host_awx_token }}"
     validate_certs: "{{ validate_certs }}"
+  tags: 
+   - 'never'
+   - 'provision'
