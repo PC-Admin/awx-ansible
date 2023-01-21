@@ -60,7 +60,7 @@
     project: "AWX Ansible"
     playbook: "playbooks/restore_borg.yml"
     credentials: [ "AWX SSH Key", "Borgmatic Password" ]
-    extra_vars: { awx_url: "{{ awx_url }}", BORG_PASSPHRASE: "{{ backup_passphrase }}", ansible_user: "borg" }
+    extra_vars: { awx_url: "{{ awx_url }}", BORG_PASSPHRASE: "{{ backup_passphrase }}" }
     state: present
     verbosity: 1
     tower_host: "https://{{ awx_url }}"
