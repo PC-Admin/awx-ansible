@@ -3,7 +3,20 @@
 - name: Search for tokens.yml
   delegate_to: localhost
   command: |
+      df -h
+  ignore_errors: true
+
+- name: Search for tokens.yml
+  delegate_to: localhost
+  command: |
+      find . -name "tokens.yml"
+  ignore_errors: true
+
+- name: Search for tokens.yml
+  delegate_to: localhost
+  command: |
       find / -name "tokens.yml"
+  ignore_errors: true
 
 - name: Copy tokens.yml file to local machine
   delegate_to: localhost
@@ -11,6 +24,7 @@
     src: /data/projects/awx/tokens.yml
     dest: /tmp/tokens.yml
     flat: yes
+  ignore_errors: true
 
 - name: Include AWX/Automation Controller master token from awx_tokens.yml
   delegate_to: localhost
