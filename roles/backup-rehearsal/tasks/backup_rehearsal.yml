@@ -124,13 +124,49 @@
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: "{{ validate_certs }}"
 
-# Template the backup_rehearsal.json
-
 - name: Template the backup_rehearsal.json file locally
   delegate_to: localhost
   ansible.builtin.template:
     src: roles/backup-rehearsal/surveys/backup_rehearsal.json.j2
     dest: /tmp/backup_rehearsal.json
+
+- name: Copy current hosts inventory to /tmp/vars.yml
+  delegate_to: localhost
+  ansible.builtin.copy:
+    src: "inventory/host_vars/{{ awx_url }}/vars.yml"
+    dest: "/tmp/vars.yml"
+
+- name: Remove line containing 'awx_url' from vars.yml
+  delegate_to: localhost
+  ansible.builtin.lineinfile:
+    path: /tmp/vars.yml
+    regexp: '^awx_url:.*$'
+    state: absent
+
+- name: Create host_awx_token variable for executing AWX modules
+  delegate_to: localhost
+  awx.awx.tower_token:
+    description: 'AWX Session Token'
+    scope: "write"
+    state: present
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ master_token }}"
+    validate_certs: "{{ validate_certs }}"
+  register: host_awx_token
+
+- name: Add line containing 'host_awx_token' to vars.yml
+  delegate_to: localhost
+  ansible.builtin.lineinfile:
+    path: /tmp/vars.yml
+    regexp: '^host_awx_token:.*$'
+    line: 'host_awx_token: {{ host_awx_token.ansible_facts.tower_token.token }}'
+
+- name: Add line containing 'host_awx_url' to vars.yml
+  delegate_to: localhost
+  ansible.builtin.lineinfile:
+    path: /tmp/vars.yml
+    regexp: '^host_awx_url:.*$'
+    line: 'host_awx_url: {{ awx_url }}'
 
 - name: Create 'AWX Disaster Recovery Rehearsal' workflow template
   awx.awx.workflow_job_template:
@@ -138,6 +174,7 @@
     description: "Causes AWX to clone itself from its own backup, automatically provisioning the server and DNS records. It then examines if the recovered version is functional, generates a report, then deletes it."
     survey_enabled: true
     survey_spec: "{{ lookup('file', '/tmp/backup_rehearsal.json') }}"
+    extra_vars: "{{ lookup('file', '/tmp/vars.yml') | from_yaml }}"
     workflow_nodes:
       - identifier: "Provision AWX Server"
         job_type: run
@@ -221,14 +258,15 @@
     tower_host: "https://{{ awx_url }}"
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: "{{ validate_certs }}"
-
+  ignore_errors: true
 
 - name: Create 'AWX Disaster Recovery Rehearsal 2' workflow template
   awx.awx.workflow_job_template:
     name: "AWX Disaster Recovery Rehearsal 2"
     description: "Causes AWX to clone itself from its own backup, automatically provisioning the server and DNS records. It then examines if the recovered version is functional, generates a report, then deletes it."
     survey_enabled: true
-    survey_spec: "{{ lookup('file', 'roles/backup-rehearsal/surveys/backup_rehearsal.json.j2') }}"
+    survey_spec: "{{ lookup('file', '/tmp/backup_rehearsal.json') }}"
+    extra_vars: "{{ lookup('file', '/tmp/vars.yml') | from_yaml }}"
     workflow_nodes:
       - identifier: "Provision AWX Server"
         job_type: run
@@ -293,7 +331,6 @@
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: "{{ validate_certs }}"
 
-
 #- name: Collect timezone of AWX server (Debian and derivatives only)
 #  command: cat /etc/timezone
 #  register: timezone_output
@@ -312,28 +349,6 @@
 #    tower_host: "https://{{ awx_url }}"
 #    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
 #    validate_certs: "{{ validate_certs }}"
-
-#- name: Add AWX host to the {{ org_name }} inventory
-#  awx.awx.tower_host:
-#    name: "{{ new_awx_url }}"
-#    description: "A new AWX Server, accessed at its URL."
-#    inventory: "{{ org_name }}"
-#    state: present
-#    tower_host: "https://{{ awx_url }}"
-#    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-#    validate_certs: "{{ validate_certs }}"
-#  ignore_errors: True
-
-- name: Add group awx_servers
-  awx.awx.tower_group:
-    name: awx_servers
-    description: "AWX servers."
-    inventory: "{{ org_name }}"
-    hosts: "{{ new_awx_url }}"
-    state: present
-    tower_host: "https://{{ awx_url }}"
-    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
-    validate_certs: "{{ validate_certs }}"
 
 - name: Delete the AWX session token for executing modules
   awx.awx.tower_token:
