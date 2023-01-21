@@ -112,6 +112,23 @@
     tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
     validate_certs: "{{ validate_certs }}"
 
+- name: Create 'Destroy AWX Server' job template
+  awx.awx.tower_job_template:
+    name: "Destroy AWX Server"
+    description: "Destroys an AWX server with your existing AWX server."
+    job_type: run
+    inventory: "{{ org_name }}"
+    project: "AWX Ansible"
+    playbook: setup.yml
+    ask_extra_vars: yes
+    credential: "AWX Root Key"
+    job_tags: deprovision
+    state: present
+    verbosity: 1
+    tower_host: "https://{{ awx_url }}"
+    tower_oauthtoken: "{{ awx_session_token.ansible_facts.tower_token.token }}"
+    validate_certs: "{{ validate_certs }}"
+
 - name: Create 'Deploy AWX Server' job template
   awx.awx.tower_job_template:
     name: "Deploy AWX Server"
