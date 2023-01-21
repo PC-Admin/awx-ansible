@@ -11,18 +11,21 @@
   tasks:
     - name: Collect the id of the last failed job
       command: |
-          curl -H "Authorization: Bearer {{ awx_token }}" -kX GET 'https://{{ awx_url }}/api/v2/job_templates/?status=failed'
+          curl -H "Authorization: Bearer {{ awx_token }}" -kX GET 'https://{{ host_awx_url }}/api/v2/job_templates/?status=failed'
       register: job_details
 
-    - name: Collect the output of that job
-      command: |
-          curl -H "Authorization: Bearer {{ awx_token }}" -kX GET 'https://{{ awx_url }}/api/v2/jobs/169/stdout/?format=txt'
-      register: job_output
-
-    - name: Set facts for job id, status, output etc
+    - name: Set facts for job id and datetime
       set_fact:
         job_id: "{{ job_details.stdout | from_json | json_query('results[0].summary_fields.recent_jobs[0].id') }}"
         job_finished: "{{ job_details.stdout | from_json | json_query('results[0].summary_fields.recent_jobs[0].finished') }}"
+
+    - name: Collect the output of that job
+      command: |
+          curl -H "Authorization: Bearer {{ awx_token }}" -kX GET 'https://{{ host_awx_url }}/api/v2/jobs/{{ job_id }}/stdout/?format=txt'
+      register: job_output
+
+    - name: Set fact for job error
+      set_fact:
         job_error: "{{ job_output.stdout | replace('\"','') }}"
 
     - name: Send email using Mailgun API
@@ -43,6 +46,6 @@
           -F from='AWX Error Report <mailgun@{{ mailgun_domain_name }}>' \
           -F to={{ admin_email }} \
           -F subject='AWX Error Report' \
-          -F text='"An AWX job has failed. Job ID: {{ job_id }} Job finished: {{ job_finished }} Visit this URL to view the failed job: https://{{ awx_url }}/#/jobs/playbook/{{ job_id }}/output"'
+          -F text='"An AWX job has failed. Job ID: {{ job_id }} Job finished: {{ job_finished }} Visit this URL to view the failed job: https://{{ host_awx_url }}/#/jobs/playbook/{{ job_id }}/output"'
 
 # Job output: {{ job_error }}
