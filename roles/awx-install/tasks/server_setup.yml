@@ -33,6 +33,7 @@
 - name: Add prerequisite packages
   ansible.builtin.package:
     pkg:
+    - sudo
     - apt-transport-https
     - ca-certificates
     - gnupg2

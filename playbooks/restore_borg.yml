@@ -1,9 +1,7 @@
 ---
 
 - name: "Restores a Borg backup of the local dumps from the Backup Server to a target AWX system."
-  hosts: localhost
-  become: false
-  become_user: root
+  hosts: "{{ 'awx_servers' }}"
   gather_facts: false
 
   #vars_prompt:
@@ -32,7 +30,7 @@
       retries: 10
 
     - name: Add prerequisite packages to new AWX Server
-      delegate_to: '{{ awx_url }}'
+      #delegate_to: '{{ awx_url }}'
       ansible.builtin.apt:
         pkg:
         - rsync
@@ -42,7 +40,7 @@
       retries: 10
 
     - name: Create borg user on AWX server
-      delegate_to: '{{ awx_url }}'
+      #delegate_to: '{{ awx_url }}'
       ansible.builtin.user:
         name: borg
         shell: /bin/bash
@@ -75,7 +73,7 @@
         mode: '0755'
 
     - name: "Empty extracted directory on the new AWX Server."
-      delegate_to: '{{ awx_url }}'
+      #delegate_to: '{{ awx_url }}'
       ansible.builtin.file:
         state: absent
         path: /home/borg/extracted
@@ -85,7 +83,7 @@
         mode: '0755'
 
     - name: "Ensure extracted directory exists on the new AWX Server."
-      delegate_to: '{{ awx_url }}'
+      #delegate_to: '{{ awx_url }}'
       ansible.builtin.file:
         path: /home/borg/extracted
         state: directory
@@ -94,7 +92,7 @@
         mode: '0755'
 
     - name: Generate or regenerate a Borgmatic SSH e25519 keypair
-      delegate_to: '{{ backup_server_ip }}'
+      #delegate_to: '{{ backup_server_ip }}'
       community.crypto.openssh_keypair:
         comment: "Borgmatic Backup Server > New AWX Server."
         path: /home/borg/.ssh/borg_transfer
@@ -105,7 +103,7 @@
         mode: '0600'
 
     - name: Add SSH config entry for accessing the backup server
-      delegate_to: '{{ backup_server_ip }}'
+      #delegate_to: '{{ backup_server_ip }}'
       ansible.builtin.blockinfile:
         path: "/home/borg/.ssh/config"
         marker_begin: "BEGIN SSH config entry for {{ awx_url }} backup transmission"
@@ -129,14 +127,14 @@
       register: borg_transfer_ssh_public_key
 
     - name: Create borg user on the new AWX server
-      delegate_to: '{{ awx_url }}'
+      #delegate_to: '{{ awx_url }}'
       ansible.builtin.user:
         name: borg
         shell: /bin/bash
         password: '!'
 
     - name: Write public SSH key to authorized_keys file on the new AWX Server
-      delegate_to: '{{ awx_url }}'
+      #delegate_to: '{{ awx_url }}'
       ansible.builtin.lineinfile:
         path: /home/borg/.ssh/authorized_keys
         regexp: '^.*Borgmatic Backup Server > New AWX Server.*$'
@@ -172,13 +170,13 @@
           rsync -av /home/borg/extracted/data/backup {{ awx_url }}:/home/borg/extracted/
 
     - name: Create a list of the new local dump files
-      delegate_to: '{{ awx_url }}'
+      #delegate_to: '{{ awx_url }}'
       shell: |
           ls -1 /home/borg/extracted/backup/ | grep tower
       register: move_list_dumps
 
     - name: Move the local dumps to /data/backup/ on the new AWX Server
-      delegate_to: '{{ awx_url }}'
+      #delegate_to: '{{ awx_url }}'
       ansible.builtin.copy:
         src: "/home/borg/extracted/backup/{{ item }}"
         dest: "/data/backup/"
@@ -189,7 +187,7 @@
       loop: "{{ move_list_dumps.stdout_lines }}"
 
     - name: Collect a list of available local dumps on the new AWX Server
-      delegate_to: '{{ awx_url }}'
+      #delegate_to: '{{ awx_url }}'
       become: yes
       become_user: borg
       ansible.builtin.shell: |

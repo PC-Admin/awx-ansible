@@ -273,6 +273,7 @@
   ansible.builtin.package:
     pkg:
     - borgmatic
+    - sudo
   register: package_status
   until: package_status is success
   delay: 6
