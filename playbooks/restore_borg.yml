@@ -92,7 +92,7 @@
         mode: '0755'
 
     - name: Generate or regenerate a Borgmatic SSH e25519 keypair
-      #delegate_to: '{{ backup_server_ip }}'
+      delegate_to: '{{ backup_server_ip }}'
       community.crypto.openssh_keypair:
         comment: "Borgmatic Backup Server > New AWX Server."
         path: /home/borg/.ssh/borg_transfer
@@ -103,7 +103,7 @@
         mode: '0600'
 
     - name: Add SSH config entry for accessing the backup server
-      #delegate_to: '{{ backup_server_ip }}'
+      delegate_to: '{{ backup_server_ip }}'
       ansible.builtin.blockinfile:
         path: "/home/borg/.ssh/config"
         marker_begin: "BEGIN SSH config entry for {{ awx_url }} backup transmission"
