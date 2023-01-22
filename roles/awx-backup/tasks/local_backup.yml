@@ -99,8 +99,8 @@
     description: "Backs up the AWX host system, dumping a snapshot of it to the local disk."
     job_type: run
     inventory: "Localhost"
-    project: "AWX on K3s"
-    playbook: backup/ansible/project/backup.yml
+    project: "AWX Ansible"
+    playbook: playbooks/restore_local.yml
     instance_groups: ["AWX Server (Custom Runner)"]
     state: present
     verbosity: 1
