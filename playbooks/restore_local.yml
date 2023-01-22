@@ -2,7 +2,7 @@
 
 - name: "Restores a Borg backup of the local dumps from the Backup Server to a target AWX system."
   hosts: "{{ 'awx_servers' }}"
-  gather_facts: false
+  gather_facts: true
 
   tasks:
     - name: Delete AWX instance.
